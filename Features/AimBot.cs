@@ -162,7 +162,20 @@ namespace CS2GameHelper.Features
                     _aimSuccessCount = 0; _aimTotalCount = 0; _lastAimEvent = DateTime.Now;
                 }
 
-                var aimResult = _targetSelector.FindBestTarget(GameData, _dynamicFov);
+                var aimResult = _targetSelector.FindBestTarget(GameData, _dynamicFov, _activeTargetId);
+                if (aimResult.Found)
+                {
+                    if (aimResult.TargetId != _activeTargetId)
+                    {
+                        _activeTargetId = aimResult.TargetId;
+                        _lastTargetLockTime = DateTime.Now;
+                    }
+                }
+                else
+                {
+                    _activeTargetId = -1;
+                    _lastTargetLockTime = DateTime.MinValue;
+                }
                 Point aimPixels = Point.Empty;
 
                 // === Расчёт фич для AimContext ===
@@ -193,7 +206,7 @@ namespace CS2GameHelper.Features
 
                 if (aimResult.Found)
                 {
-                    AimingMath.GetAimAngles(GameData.Player, aimResult.TargetPosition, out _, out var angles);
+                    var angles = aimResult.AimAngles;
                     AimingMath.GetAimPixels(angles, _anglePerPixelHorizontal, _anglePerPixelVertical, out aimPixels);
 
                     var ctx = new AimContext(
@@ -219,8 +232,9 @@ namespace CS2GameHelper.Features
                 if ((DateTime.Now - _inputHandler.LastMouseMoveTime).TotalMilliseconds < UserMouseDeltaResetMs)
                     adapt *= 0.5;
 
-                aimPixels.X = (int)(aimPixels.X * adapt);
-                aimPixels.Y = (int)(aimPixels.Y * adapt);
+                double smoothing = Math.Max(1.0, _dynamicSmoothing);
+                aimPixels.X = (int)(aimPixels.X * adapt / smoothing);
+                aimPixels.Y = (int)(aimPixels.Y * adapt / smoothing);
 
                 var shouldWait = false;
 
@@ -235,10 +249,17 @@ namespace CS2GameHelper.Features
                     shouldWait = TryMouseDown();
                 }
 
-                shouldWait |= TryMouseMoveNew(aimPixels);
+                if (aimPixels.X != 0 || aimPixels.Y != 0)
+                {
+                    if (Math.Abs(aimPixels.X) > 3 || Math.Abs(aimPixels.Y) > 3)
+                        Utility.WindMouseMove(aimPixels.X, aimPixels.Y, G_0: 8.0, W_0: 2.5, M_0: 12.0, D_0: 10.0);
+                    else
+                        Utility.MouseMove(aimPixels.X, aimPixels.Y);
 
-                if (shouldWait) Thread.Sleep(1); // минимальная пауза
+                    shouldWait = true;
+                }
 
+                if (shouldWait) Thread.Sleep(1);
                 if (aimResult.Found) _aimSuccessCount++;
 
                 // === СБОР ОСТАТКОВ БЕЗ SLEEP ===
@@ -282,11 +303,6 @@ namespace CS2GameHelper.Features
                 // === Детект попадания по дельте урона → ConfirmHit() для обучения ===
                 TryConfirmHitFromDamage();
 
-                if (!aimResult.Found)
-                {
-                    _activeTargetId = -1;
-                    _lastTargetLockTime = DateTime.MinValue;
-                }
                 _aimTotalCount++;
             }
             catch (Exception ex)
@@ -305,18 +321,7 @@ namespace CS2GameHelper.Features
 
         private void ApplyHumanizedAimAdjustments(ref Point aimPixels, AimTargetResult aimResult)
         {
-            if (!aimResult.Found)
-            {
-                _activeTargetId = -1;
-                _lastTargetLockTime = DateTime.MinValue;
-                return;
-            }
-
-            if (aimResult.TargetId != _activeTargetId)
-            {
-                _activeTargetId = aimResult.TargetId;
-                _lastTargetLockTime = DateTime.Now;
-            }
+            if (!aimResult.Found) return;
 
             var lockDuration = (DateTime.Now - _lastTargetLockTime).TotalMilliseconds;
             var pixelDistance = Math.Sqrt(aimPixels.X * (double)aimPixels.X + aimPixels.Y * (double)aimPixels.Y);
@@ -335,7 +340,6 @@ namespace CS2GameHelper.Features
                 aimPixels.Y += _humanizationRandom.Next(-jitterRange, jitterRange + 1);
             }
         }
-
         private void TryConfirmHitFromDamage()
         {
             try

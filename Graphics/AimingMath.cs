@@ -9,33 +9,50 @@ namespace CS2GameHelper.Graphics
     public static class AimingMath
     {
         /// <summary>
-        /// Рассчитывает углы прицеливания от игрока к точке в мире.
+        /// Calculates the required aim angle deltas to reach pointWorld from the current player's state.
         /// </summary>
         public static void GetAimAngles(Player player, Vector3 pointWorld, out float angleSize, out Vector2 aimAngles)
         {
             aimAngles = Vector2.Zero;
             angleSize = 0f;
 
-            var aimDirection = player.AimDirection;
-            var aimDirectionDesired = (pointWorld - player.EyePosition).GetNormalized();
+            var eyePos = player.EyePosition;
+            var dirToTarget = (pointWorld - eyePos).GetNormalized();
 
-            var horizontalAngle = aimDirectionDesired.GetSignedAngleTo(aimDirection, new Vector3(0, 0, 1));
-            var verticalAngle = aimDirectionDesired.GetSignedAngleTo(aimDirection,
-                Vector3.Cross(aimDirectionDesired, new Vector3(0, 0, 1)).GetNormalized());
+            // Current view angles (X = Pitch, Y = Yaw)
+            var currentAngles = player.ViewAngles;
 
-            aimAngles = new Vector2(horizontalAngle, verticalAngle);
-            angleSize = aimDirection.GetAngleTo(aimDirectionDesired);
+            // Target angles
+            double targetYaw = Math.Atan2(dirToTarget.Y, dirToTarget.X) * (180.0 / Math.PI);
+            double targetPitch = Math.Asin(-dirToTarget.Z) * (180.0 / Math.PI);
+
+            // Deltas
+            double deltaYaw = targetYaw - currentAngles.Y;
+            double deltaPitch = targetPitch - (currentAngles.X + player.AimPunchAngle.X * 2.0); // Simple recoil comp
+
+            // Normalize Yaw
+            while (deltaYaw > 180) deltaYaw -= 360;
+            while (deltaYaw < -180) deltaYaw += 360;
+
+            aimAngles = new Vector2((float)(deltaYaw * (Math.PI / 180.0)), (float)(deltaPitch * (Math.PI / 180.0)));
+            angleSize = player.EyeDirection.GetAngleTo(dirToTarget);
         }
 
         /// <summary>
-        /// Конвертирует углы прицеливания в смещение в пикселях на экране.
+        /// Converts angular deltas to pixel offsets.
         /// </summary>
         public static void GetAimPixels(Vector2 aimAngles, double anglePerPixelHorizontal, double anglePerPixelVertical, out Point aimPixels)
         {
-            var fovRatio = 90.0 / Player.Fov;
+            // Note: In Source, mouse movement translates directly to angle changes.
+            // Horizontal: +deltaX move = -deltaYaw (looking right)
+            // Vertical: +deltaY move = +deltaPitch (looking down)
+
+            // aimAngles.X is deltaYaw in radians
+            // aimAngles.Y is deltaPitch in radians
+
             aimPixels = new Point(
-                (int)Math.Round(aimAngles.X / anglePerPixelHorizontal * fovRatio),
-                (int)Math.Round(aimAngles.Y / anglePerPixelVertical * fovRatio)
+                (int)Math.Round(-aimAngles.X / anglePerPixelHorizontal),
+                (int)Math.Round(aimAngles.Y / anglePerPixelVertical)
             );
         }
 

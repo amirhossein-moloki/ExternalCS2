@@ -1,32 +1,36 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using CS2GameHelper.Data.Entity;
 using CS2GameHelper.Data.Game;
 using CS2GameHelper.Graphics;
-using System.Numerics;
+using CS2GameHelper.Features;
 
 namespace CS2GameHelper.Features.Aiming
 {
     public class TargetSelector
     {
-        private static readonly string[] AimBonePriority = { "head", "neck", "chest", "pelvis" };
+        // Matching bone names from Offsets.cs
+        private static readonly string[] AimBonePriority = { "head", "neck_0", "spine_1", "pelvis" };
+        private const float StickinessMultiplier = 0.5f;
 
-        private int _lastTargetId = -1;
-        private Vector3 _lastTargetPos = Vector3.Zero;
-        private DateTime _lastTargetUpdate = DateTime.MinValue;
-        private Vector3 _lastTargetVel = Vector3.Zero;
-
-        public AimTargetResult FindBestTarget(GameData gameData, double customFov)
+        public AimTargetResult FindBestTarget(GameData gameData, double customFov, int currentTargetId)
         {
             if (gameData?.Player == null || gameData.Entities == null)
-                return new AimTargetResult(false, Vector3.Zero, Vector2.Zero, 0f, -1, Vector3.Zero); // <-- добавлен Vector3.Zero
+                return new AimTargetResult(false, Vector3.Zero, Vector2.Zero, 0f, -1, Vector3.Zero);
 
-            var minAngleSize = float.MaxValue;
-            Vector2 bestAimAngles = new(float.Pi, float.Pi);
+            var minScore = float.MaxValue;
+            Vector2 bestAimAngles = Vector2.Zero;
             Vector3 bestAimPosition = Vector3.Zero;
             float bestDistance = 0f;
             int bestTargetId = -1;
-            Vector3 bestTargetVelocity = Vector3.Zero; // <-- ОБЪЯВЛЕНО!
+            Vector3 bestTargetVelocity = Vector3.Zero;
             bool targetFound = false;
+
+            Vector3 playerPos = gameData.Player.EyePosition;
+            Vector3 playerVel = gameData.Player.Velocity;
+            Vector3 playerLookDir = gameData.Player.EyeDirection;
 
             foreach (var entity in gameData.Entities.Where(entity =>
                 entity.IsAlive() &&
@@ -34,50 +38,48 @@ namespace CS2GameHelper.Features.Aiming
                 entity.Team != gameData.Player.Team &&
                 entity.IsSpotted))
             {
+                Vector3 targetVelocity = entity.Velocity;
+                float distanceToTarget = Vector3.Distance(playerPos, entity.Position);
+
+                Vector3 relativeVelocity = targetVelocity - playerVel;
+                // Prediction based on travel time + approx latency
+                float predictionTime = 0.015f + (distanceToTarget / 20000f);
+
                 foreach (var bone in AimBonePriority)
                 {
                     if (!entity.BonePos.TryGetValue(bone, out var bonePos)) continue;
 
-                    Vector3 predictedPos = bonePos;
-                    Vector3 targetVelocity = Vector3.Zero;
-                    var dt = (float)(DateTime.Now - _lastTargetUpdate).TotalSeconds;
+                    Vector3 predictedPos = bonePos + relativeVelocity * predictionTime;
 
-                    if (entity.Id != _lastTargetId)
+                    var dirToTarget = (predictedPos - playerPos).GetNormalized();
+                    float angleFromCrosshair = playerLookDir.GetAngleTo(dirToTarget);
+
+                    float effectiveAngle = angleFromCrosshair;
+                    if (entity.Id == currentTargetId)
                     {
-                        _lastTargetPos = bonePos;
-                        _lastTargetVel = Vector3.Zero;
-                    }
-                    else if (dt > 0.001f && dt < 0.5f)
-                    {
-                        _lastTargetVel = (bonePos - _lastTargetPos) / dt;
-                        targetVelocity = _lastTargetVel;
+                        effectiveAngle *= StickinessMultiplier;
                     }
 
-                    _lastTargetId = entity.Id;
-                    _lastTargetUpdate = DateTime.Now;
-                    _lastTargetPos = bonePos;
+                    if (effectiveAngle > customFov) continue;
 
-                    var distanceToTarget = Vector3.Distance(gameData.Player.EyePosition, bonePos);
-                    var dynamicPredictionTime = 0.05f + Math.Min(distanceToTarget / 1000f, 1f) * 0.15f;
-                    predictedPos = bonePos + _lastTargetVel * dynamicPredictionTime;
+                    // Score: smaller angle is much better than closer distance
+                    float score = (float)(effectiveAngle * 100.0 + distanceToTarget / 1000.0);
 
-                    AimingMath.GetAimAngles(gameData.Player, predictedPos, out var angleToBoneSize, out var anglesToBone);
-                    if (angleToBoneSize > customFov) continue;
-
-                    if (angleToBoneSize < minAngleSize)
+                    if (score < minScore)
                     {
-                        minAngleSize = angleToBoneSize;
-                        bestAimAngles = anglesToBone;
+                        minScore = score;
+                        AimingMath.GetAimAngles(gameData.Player, predictedPos, out _, out bestAimAngles);
+
                         bestAimPosition = predictedPos;
                         bestDistance = distanceToTarget;
                         bestTargetId = entity.Id;
-                        bestTargetVelocity = targetVelocity; // <-- ИСПОЛЬЗУЕТСЯ!
+                        bestTargetVelocity = targetVelocity;
                         targetFound = true;
                     }
                 }
             }
 
-            return new AimTargetResult(targetFound, bestAimPosition, bestAimAngles, bestDistance, bestTargetId, bestTargetVelocity); // <-- передано!
+            return new AimTargetResult(targetFound, bestAimPosition, bestAimAngles, bestDistance, bestTargetId, bestTargetVelocity);
         }
     }
 }
