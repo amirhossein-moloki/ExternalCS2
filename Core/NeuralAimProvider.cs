@@ -83,15 +83,8 @@ namespace CS2GameHelper.Core
             _modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ModelFileName);
             _statsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, StatsFileName);
 
-            // CUDA если доступна в этой сборке TorchSharp (при -p:UseCuda=true).
-            try
-            {
-                _device = torch.cuda.is_available() ? CUDA : CPU;
-            }
-            catch
-            {
-                _device = CPU;
-            }
+            // Force CPU device as per user request.
+            _device = CPU;
             Console.WriteLine($"[NeuralAim] Device: {_device}");
 
             LoadStats();

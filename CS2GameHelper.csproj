@@ -38,12 +38,10 @@
         <PackageReference Include="SkiaSharp" Version="2.88.8"/>
         <PackageReference Include="System.Drawing.Common" Version="8.0.8"/>
         <!--
-            TorchSharp backend selection. Default is CUDA (Windows GPU build).
-            Override via MSBuild:  /p:UseCuda=false  to produce a CPU-only build.
+            TorchSharp backend selection. Default is CPU.
             The two packages are mutually exclusive — keep exactly one resolved.
         -->
-        <PackageReference Include="TorchSharp-cuda-windows" Version="0.105.1" Condition="'$(UseCuda)' != 'false'" />
-        <PackageReference Include="TorchSharp-cpu"          Version="0.105.1" Condition="'$(UseCuda)' == 'false'" />
+        <PackageReference Include="TorchSharp-cpu" Version="0.105.1" />
         <!-- Test helpers (added to main project to ensure test packages are available during CI/build) -->
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" PrivateAssets="all" />
         <PackageReference Include="xunit" Version="2.5.3" PrivateAssets="all" />
@@ -55,7 +53,7 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <ExcludeFromSingleFile>false</ExcludeFromSingleFile>
         </None>
-        <None Include="assets\fonts\emoji.ttf">
+        <None Include="assets\fonts\emoji.TTF">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <ExcludeFromSingleFile>false</ExcludeFromSingleFile>
         </None>

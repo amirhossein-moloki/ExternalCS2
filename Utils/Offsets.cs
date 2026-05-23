@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
-using System.Net.Http;
 using System.Text.Json;
 
 namespace CS2GameHelper.Utils;
@@ -111,45 +110,23 @@ public abstract class Offsets
     {
         string? offsetsJson = null;
         string? clientJson = null;
-        bool fromRemote = false;
 
         try
         {
-            // Пытаемся загрузить из интернета
-            offsetsJson = await FetchJson("https://raw.githubusercontent.com/sezzyaep/CS2-OFFSETS/refs/heads/main/offsets.json");
-            clientJson = await FetchJson("https://raw.githubusercontent.com/sezzyaep/CS2-OFFSETS/refs/heads/main/client_dll.json");
-            fromRemote = true;
-            Console.WriteLine("[Offsets] Loaded from remote.");
+            // Load from local files
+            if (!File.Exists(_localOffsetsPath) || !File.Exists(_localClientPath))
+                throw new FileNotFoundException("Local offset files not found in 'offsets/' directory.");
+
+            offsetsJson = await File.ReadAllTextAsync(_localOffsetsPath);
+            clientJson = await File.ReadAllTextAsync(_localClientPath);
+            Console.WriteLine("[Offsets] Loaded from local files.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Offsets] Remote load failed: {ex.Message}. Trying local cache...");
-            // Пытаемся загрузить локально
-            try
-            {
-                if (!File.Exists(_localOffsetsPath) || !File.Exists(_localClientPath))
-                    throw new FileNotFoundException("Local offset files not found.");
-
-                offsetsJson = await File.ReadAllTextAsync(_localOffsetsPath);
-                clientJson = await File.ReadAllTextAsync(_localClientPath);
-                Console.WriteLine("[Offsets] Loaded from local cache.");
-            }
-            catch (Exception localEx)
-            {
-                throw new InvalidOperationException($"Both remote and local offset loading failed. Remote: {ex.Message}. Local: {localEx.Message}");
-            }
+            throw new InvalidOperationException($"Failed to load local offsets: {ex.Message}");
         }
 
-        // Сохраняем локально, если загружено из интернета
-        if (fromRemote)
-        {
-            Directory.CreateDirectory(_offsetsDir);
-            await File.WriteAllTextAsync(_localOffsetsPath, offsetsJson);
-            await File.WriteAllTextAsync(_localClientPath, clientJson);
-            Console.WriteLine("[Offsets] Saved local cache.");
-        }
-
-        // Парсим и применя
+        // Парсим и применяем
         using var offsetsDoc = JsonDocument.Parse(offsetsJson);
         using var clientDoc = JsonDocument.Parse(clientJson);
 
@@ -258,17 +235,6 @@ public abstract class Offsets
         if (!fields.TryGetValue(fieldName, out var offset))
             throw new InvalidOperationException($"Field '{className}.fields.{fieldName}' not found in client_dll.json");
         return offset;
-    }
-
-    private static async Task<string> FetchJson(string url)
-    {
-        url = url.Trim();
-        using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(10);
-        var content = await client.GetStringAsync(url);
-        if (string.IsNullOrWhiteSpace(content) || content.TrimStart().StartsWith("<"))
-            throw new InvalidOperationException($"Invalid response from {url}");
-        return content;
     }
 
     private static void UpdateStaticFields(dynamic data)
