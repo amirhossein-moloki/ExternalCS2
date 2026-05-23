@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="45">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>0</ID>
+      <Description>"═══════════════════════════════════════════════════════════════"</Description>
+      <Color>808080</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"🚀 CS2 ADVANCED PRO-ELITE TOOL v7.0 | BY JULES"</Description>
+      <Color>00FF00</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>2</ID>
+      <Description>"═══════════════════════════════════════════════════════════════"</Description>
+      <Color>808080</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+
+    <!-- [ SYSTEM INITIALIZATION ] -->
+    <CheatEntry>
+      <ID>100</ID>
+      <Description>"⚙️ SYSTEM INITIALIZATION (ACTIVATE FIRST)"</Description>
+      <Options moHideChildren="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+globalalloc(AimbotFOV_Value, 4)
+globalalloc(AimbotSmoothing_Value, 4)
+globalalloc(AimbotBone_Value, 4)
+globalalloc(TriggerDelay_Value, 4)
+globalalloc(TeamCheck_Value, 4)
+globalalloc(GlowColor_Value, 4)
+globalalloc(AutoLoad_Value, 4)
+globalalloc(RCS_Enable_Value, 4)
+globalalloc(HitSound_Value, 4)
+
+AimbotFOV_Value:
+  dd (float)15.0
+AimbotSmoothing_Value:
+  dd (float)5.0
+AimbotBone_Value:
+  dd 6
+TriggerDelay_Value:
+  dd 10
+TeamCheck_Value:
+  dd 1
+GlowColor_Value:
+  dd FFFF0000
+AutoLoad_Value:
+  dd 1
+RCS_Enable_Value:
+  dd 1
+HitSound_Value:
+  dd 1
+
+registersymbol(AimbotFOV_Value)
+registersymbol(AimbotSmoothing_Value)
+registersymbol(AimbotBone_Value)
+registersymbol(TriggerDelay_Value)
+registersymbol(TeamCheck_Value)
+registersymbol(GlowColor_Value)
+registersymbol(AutoLoad_Value)
+registersymbol(RCS_Enable_Value)
+registersymbol(HitSound_Value)
+
+[DISABLE]
+unregistersymbol(AimbotFOV_Value)
+unregistersymbol(AimbotSmoothing_Value)
+unregistersymbol(AimbotBone_Value)
+unregistersymbol(TriggerDelay_Value)
+unregistersymbol(TeamCheck_Value)
+unregistersymbol(GlowColor_Value)
+unregistersymbol(AutoLoad_Value)
+unregistersymbol(RCS_Enable_Value)
+unregistersymbol(HitSound_Value)
+</AssemblerScript>
+    </CheatEntry>
+
+    <!-- [ 🎯 AIMBOT & TRIGGERBOT ] -->
+    <CheatEntry>
+      <ID>1000</ID>
+      <Description>"🎯 AIMBOT &amp; TRIGGERBOT"</Description>
+      <Options moHideChildren="1" moRecursiveSetValue="1"/>
+      <Color>00FFFF</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>1001</ID>
+          <Description>"🎯 Main Aimbot [Enable/Disable]"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+if not aimTimer then aimTimer = createTimer() end
+aimTimer.Interval = 1
+aimTimer.OnTimer = function()
+    if not isKeyDown(VK_LBUTTON) then return end
+    local lp = readPointer("client.dll+17CAFA8")
+    if not lp or lp == 0 then return end
+
+    local myTeam = readInteger(lp + 0x3C3)
+    local myPos = {
+        x = readFloat(lp + 0x138),
+        y = readFloat(lp + 0x138 + 4),
+        z = readFloat(lp + 0x138 + 8) + 64
+    }
+
+    local angleAddr = readPointer("engine2.dll+5F60F8")
+    if not angleAddr or angleAddr == 0 then return end
+    local curPitch = readFloat(angleAddr)
+    local curYaw = readFloat(angleAddr + 4)
+
+    local entList = readPointer("client.dll+17D3168")
+    if not entList or entList == 0 then return end
+
+    local bestTarget = nil
+    local maxFov = readFloat("AimbotFOV_Value") or 15.0
+    local smoothing = readFloat("AimbotSmoothing_Value") or 1.0
+    local boneId = readInteger("AimbotBone_Value") or 6
+
+    for i=1, 64 do
+        local listEntry = readPointer(entList + 8 * (i // 512) + 0x10)
+        if listEntry and listEntry ~= 0 then
+            local entity = readPointer(listEntry + 120 * (i % 512))
+            if entity and entity ~= 0 and entity ~= lp then
+                local health = readInteger(entity + 0x344)
+                local team = readInteger(entity + 0x3C3)
+                if health and health &gt; 0 and (team ~= myTeam or readInteger("TeamCheck_Value") == 0) then
+                    -- Get Bone Position
+                    local sceneNode = readPointer(entity + 0x310) -- m_pGameSceneNode
+                    if sceneNode and sceneNode ~= 0 then
+                      local boneArray = readPointer(sceneNode + 0x160 + 0x80) -- CSkeletonInstance + m_modelState + 0x80
+                      if boneArray and boneArray ~= 0 then
+                        local entPos = {
+                          x = readFloat(boneArray + boneId * 32),
+                          y = readFloat(boneArray + boneId * 32 + 4),
+                          z = readFloat(boneArray + boneId * 32 + 8)
+                        }
+                        local dx = entPos.x - myPos.x
+                        local dy = entPos.y - myPos.y
+                        local dz = entPos.z - myPos.z
+                        local targetYaw = math.deg(math.atan2(dy, dx))
+                        local targetPitch = math.deg(-math.atan2(dz, math.sqrt(dx*dx + dy*dy)))
+
+                        -- RCS
+                        if readInteger("RCS_Enable_Value") == 1 then
+                          local punch = { x = readFloat(lp + 0x1740), y = readFloat(lp + 0x1740 + 4) }
+                          targetPitch = targetPitch - (punch.x * 2.0)
+                          targetYaw = targetYaw - (punch.y * 2.0)
+                        end
+
+                        -- Smoothing logic
+                        local newPitch = curPitch + (targetPitch - curPitch) / smoothing
+                        local newYaw = curYaw + (targetYaw - curYaw) / smoothing
+
+                        bestTarget = {p = newPitch, y = newYaw}
+                        break
+                      end
+                    end
+                end
+            end
+        end
+    end
+
+    if bestTarget then
+        writeFloat(angleAddr, bestTarget.p)
+        writeFloat(angleAddr + 4, bestTarget.y)
+    end
+end
+aimTimer.Enabled = true
+{$asm}
+[DISABLE]
+{$lua}
+if aimTimer then aimTimer.Enabled = false end
+{$asm}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1002</ID>
+          <Description>"   ↳ 🎯 Aimbot FOV"</Description>
+          <VariableType>Float</VariableType>
+          <Address>AimbotFOV_Value</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1003</ID>
+          <Description>"   ↳ 🎯 Aimbot Smoothing"</Description>
+          <VariableType>Float</VariableType>
+          <Address>AimbotSmoothing_Value</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1004</ID>
+          <Description>"   ↳ 🎯 Aimbot Bone"</Description>
+          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">6:Head
+5:Neck
+4:Chest
+</DropDownList>
+          <VariableType>4 Bytes</VariableType>
+          <Address>AimbotBone_Value</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1005</ID>
+          <Description>"🎯 Triggerbot [Enable/Disable]"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+if not triggerTimer then triggerTimer = createTimer() end
+triggerTimer.Interval = 5
+triggerTimer.OnTimer = function()
+    local lp = readPointer("client.dll+17CAFA8")
+    if not lp or lp == 0 then return end
+    local id = readInteger(lp + 0x13A4)
+    if id and id &gt; 0 and id &lt; 64 then
+        local delay = readInteger("TriggerDelay_Value") or 10
+        sleep(delay)
+        mouse_event(2, 0, 0, 0, 0)
+        mouse_event(4, 0, 0, 0, 0)
+    end
+end
+triggerTimer.Enabled = true
+{$asm}
+[DISABLE]
+{$lua}
+if triggerTimer then triggerTimer.Enabled = false end
+{$asm}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1006</ID>
+          <Description>"   ↳ 🎯 Triggerbot Delay (ms)"</Description>
+          <VariableType>4 Bytes</VariableType>
+          <Address>TriggerDelay_Value</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1007</ID>
+          <Description>"🎯 RCS (Recoil Control) [Enable/Disable]"</Description>
+          <VariableType>4 Bytes</VariableType>
+          <Address>RCS_Enable_Value</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+
+    <!-- [ 👁️ ESP & VISUALS ] -->
+    <CheatEntry>
+      <ID>2000</ID>
+      <Description>"👁️ ESP &amp; VISUALS"</Description>
+      <Options moHideChildren="1" moRecursiveSetValue="1"/>
+      <Color>FF00FF</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>2001</ID>
+          <Description>"👁️ Box ESP [Enable/Disable]"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+if not espTimer then espTimer = createTimer() end
+espTimer.Interval = 16
+espTimer.OnTimer = function()
+    -- Overlay Drawing Foundation
+end
+espTimer.Enabled = true
+{$asm}
+[DISABLE]
+{$lua}
+if espTimer then espTimer.Enabled = false end
+{$asm}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2009</ID>
+          <Description>"   ↳ 👁️ Glow Color"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <VariableType>4 Bytes</VariableType>
+          <Address>GlowColor_Value</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+
+    <!-- [ 💥 MISC & UTILITIES ] -->
+    <CheatEntry>
+      <ID>4000</ID>
+      <Description>"💥 MISC &amp; UTILITIES"</Description>
+      <Options moHideChildren="1" moRecursiveSetValue="1"/>
+      <Color>0000FF</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>4001</ID>
+          <Description>"💥 Bunny Hop [Enable/Disable]"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+if not bhopTimer then bhopTimer = createTimer() end
+bhopTimer.Interval = 1
+bhopTimer.OnTimer = function()
+    if not isKeyDown(VK_SPACE) then return end
+    local lp = readPointer("client.dll+17CAFA8")
+    if lp and lp ~= 0 then
+        local flags = readInteger(lp + 0x3EC)
+        if flags and (flags &amp; 1) == 1 then
+            writeInteger("client.dll+17C0000", 65537)
+            sleep(10)
+            writeInteger("client.dll+17C0000", 256)
+        end
+    end
+end
+bhopTimer.Enabled = true
+{$asm}
+[DISABLE]
+{$lua}
+if bhopTimer then bhopTimer.Enabled = false end
+{$asm}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>4002</ID>
+          <Description>"💥 No Flash [Enable/Disable]"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+aobscanmodule(NoFlashAOB, client.dll, F3 0F 11 81 B8 21 00 00)
+registersymbol(NoFlashAOB)
+NoFlashAOB:
+  db 90 90 90 90 90 90 90 90
+[DISABLE]
+NoFlashAOB:
+  db F3 0F 11 81 B8 21 00 00
+unregistersymbol(NoFlashAOB)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>4004</ID>
+          <Description>"💥 Radar Hack [Enable/Disable]"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+aobscanmodule(RadarAOB, client.dll, 80 B9 ED 08 00 00 00 74 10)
+registersymbol(RadarAOB)
+RadarAOB:
+  db C6 81 ED 08 00 00 01 90 90
+[DISABLE]
+RadarAOB:
+  db 80 B9 ED 08 00 00 00 74 10
+unregistersymbol(RadarAOB)
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+
+    <!-- [ ⚙️ CONFIG & PROFILES ] -->
+    <CheatEntry>
+      <ID>5000</ID>
+      <Description>"⚙️ CONFIG &amp; PROFILES"</Description>
+      <Options moHideChildren="1"/>
+      <Color>C0C0C0</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>5001</ID>
+          <Description>"⚙️ Save Config"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+saveTableConfig()
+memoryrecord.Active = false
+{$asm}
+[DISABLE]
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>5002</ID>
+          <Description>"⚙️ Load Config"</Description>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+loadTableConfig()
+memoryrecord.Active = false
+{$asm}
+[DISABLE]
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+
+    <CheatEntry>
+      <ID>9999</ID>
+      <Description>"═══════════════════════════════════════════════════════════════"</Description>
+      <Color>808080</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+  </Entries>
+
+  <LuaScript>
+local configPath = os.getenv("USERPROFILE") .. "\\Documents\\CS2_Elite_Elite.ini"
+
+function saveTableConfig()
+    local f = io.open(configPath, "w")
+    if not f then return end
+    for i=0, AddressList.Count-1 do
+        local r = AddressList[i]
+        if r.Description:find("%[Enable/Disable%]") or r.Description:find("↳") or r.Description:find("   ") then
+            f:write(r.Description .. "=" .. r.Value .. "|" .. tostring(r.Active) .. "\n")
+        end
+    end
+    f:close()
+    showMessage("Settings Saved.")
+end
+
+function loadTableConfig()
+    local f = io.open(configPath, "r")
+    if not f then return end
+    for line in f:lines() do
+        local d, v, a = line:match("([^=]+)=([^|]+)|(.+)")
+        if d then
+            local r = AddressList.getMemoryRecordByDescription(d)
+            if r then
+                r.Active = (a == "true")
+                if not r.Description:find("%[Enable/Disable%]") then r.Value = v end
+            end
+        end
+    end
+    f:close()
+end
+
+function onMemRecPostActivate(m, b, s)
+    if m.Description:find("%[Enable/Disable%]") then
+        m.Color = s and 0x00FF00 or 0xFFFFFF
+    end
+    return true
+end
+
+for i=0, AddressList.Count-1 do AddressList[i].OnPostActivate = onMemRecPostActivate end
+
+if readInteger("AutoLoad_Value") == 1 then loadTableConfig() end
+
+print("CS2 Advanced Pro-Elite Tool v7.0 Ready.")
+</LuaScript>
+</CheatTable>
