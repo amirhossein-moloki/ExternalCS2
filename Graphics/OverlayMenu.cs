@@ -412,30 +412,56 @@ namespace CS2GameHelper.Graphics
                     isSelected ? colorHighlight : colorText, 13, isSelected);
             }
             
-            // Draw Content Area
-            var contentOrigin = new Vector2(_menuPosition.X + _sidebarWidth + 20, _menuPosition.Y + _headerHeight + 25);
+            // Draw Content Area (Professional Table Layout)
+            var contentOrigin = new Vector2(_menuPosition.X + _sidebarWidth + 20, _menuPosition.Y + _headerHeight + 20);
             var currentCategory = _categories[_selectedCategory];
 
-            _graphics.DrawText(currentCategory.Name, contentOrigin.X, contentOrigin.Y - 5, colorAccent, 15, true);
-            _graphics.DrawLine(ToUint(SKColors.Cyan.WithAlpha(100)),
-                contentOrigin + new Vector2(0, 5),
-                contentOrigin + new Vector2(200, 5));
+            // Table Header
+            uint colorTableHeader = ToUint(SKColors.DarkSlateGray.WithAlpha(150));
+            _graphics.DrawRectangle(colorTableHeader, contentOrigin - new Vector2(5, 5), _menuSize.X - _sidebarWidth - 30, 25);
+            _graphics.DrawText("FEATURE NAME", contentOrigin.X + 10, contentOrigin.Y + 12, colorAccent, 10, true);
+            _graphics.DrawText("VALUE", contentOrigin.X + 280, contentOrigin.Y + 12, colorAccent, 10, true);
+            _graphics.DrawText("KEYBIND", contentOrigin.X + 420, contentOrigin.Y + 12, colorAccent, 10, true);
 
             for (int i = 0; i < currentCategory.Items.Count; i++)
             {
                 var item = currentCategory.Items[i];
-                var yOffset = 40 + (i * _itemHeight);
+                var yOffset = 35 + (i * _itemHeight);
                 bool isSelected = i == _selectedItem && !_isInSubMenu;
 
+                if (isSelected)
+                {
+                    _graphics.DrawRectangle(ToUint(SKColors.Cyan.WithAlpha(30)),
+                        new Vector2(contentOrigin.X - 5, contentOrigin.Y + yOffset - 20),
+                        _menuSize.X - _sidebarWidth - 30, _itemHeight);
+                    _graphics.DrawText(">", contentOrigin.X - 2, contentOrigin.Y + yOffset, colorHighlight, 11, true);
+                }
+
                 uint itemColor = isSelected ? colorHighlight : colorText;
-                _graphics.DrawText(item.Name, contentOrigin.X, contentOrigin.Y + yOffset, itemColor, 12);
+                _graphics.DrawText(item.Name, contentOrigin.X + 10, contentOrigin.Y + yOffset, itemColor, 11);
 
                 string val = item.GetValue();
-                uint valColor = val == "ON" ? ToUint(SKColors.Lime) : (val == "OFF" ? ToUint(SKColors.Red) : colorAccent);
-                _graphics.DrawText(val, contentOrigin.X + 350, contentOrigin.Y + yOffset, valColor, 12, true);
+                uint valColor = val == "ON" ? ToUint(SKColors.Lime) : (val == "OFF" ? ToUint(SKColors.Red) : (isSelected ? colorHighlight : colorAccent));
+                _graphics.DrawText(val, contentOrigin.X + 280, contentOrigin.Y + yOffset, valColor, 11);
 
-                if (isSelected)
-                    _graphics.DrawText(">", contentOrigin.X - 15, contentOrigin.Y + yOffset, colorHighlight, 12);
+                // Show keybind if it's a KeybindMenuItem
+                if (item is KeybindMenuItem)
+                {
+                    _graphics.DrawText(val, contentOrigin.X + 420, contentOrigin.Y + yOffset, colorTextDim, 10);
+                }
+                else if (item is ActionMenuItem)
+                {
+                    _graphics.DrawText("[EXECUTE]", contentOrigin.X + 420, contentOrigin.Y + yOffset, ToUint(SKColors.OrangeRed), 10);
+                }
+                else
+                {
+                    _graphics.DrawText("-", contentOrigin.X + 420, contentOrigin.Y + yOffset, colorTextDim, 10);
+                }
+
+                // Row Separator
+                _graphics.DrawLine(ToUint(SKColors.Gray.WithAlpha(40)),
+                    new Vector2(contentOrigin.X - 5, contentOrigin.Y + yOffset + 10),
+                    new Vector2(contentOrigin.X + _menuSize.X - _sidebarWidth - 35, contentOrigin.Y + yOffset + 10));
             }
             
             // Draw Submenu if active
