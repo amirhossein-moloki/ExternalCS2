@@ -252,9 +252,29 @@ namespace CS2GameHelper.Features
                 if (aimPixels.X != 0 || aimPixels.Y != 0)
                 {
                     if (Math.Abs(aimPixels.X) > 3 || Math.Abs(aimPixels.Y) > 3)
-                        Utility.WindMouseMove(aimPixels.X, aimPixels.Y, G_0: 8.0, W_0: 2.5, M_0: 12.0, D_0: 10.0);
+                    {
+                        // Use Bezier-augmented movement for larger jumps to look more human
+                        var start = Vector2.Zero;
+                        var end = new Vector2(aimPixels.X, aimPixels.Y);
+                        var ctrl1 = new Vector2(aimPixels.X * 0.25f, aimPixels.Y * 0.1f + _humanizationRandom.Next(-2, 2));
+                        var ctrl2 = new Vector2(aimPixels.X * 0.75f, aimPixels.Y * 0.9f + _humanizationRandom.Next(-2, 2));
+
+                        // Sample the Bezier path
+                        var p1 = AimingMath.GetBezierPoint(0.5f, start, ctrl1, ctrl2, end);
+
+                        // Execute first half of the curve with WindMouseMove
+                        Utility.WindMouseMove((int)p1.X, (int)p1.Y, G_0: 8.0, W_0: 2.5, M_0: 12.0, D_0: 10.0);
+
+                        // Execute second half as a direct correction
+                        var remainingX = aimPixels.X - (int)p1.X;
+                        var remainingY = aimPixels.Y - (int)p1.Y;
+                        if (remainingX != 0 || remainingY != 0)
+                            Utility.MouseMove(remainingX, remainingY);
+                    }
                     else
+                    {
                         Utility.MouseMove(aimPixels.X, aimPixels.Y);
+                    }
 
                     shouldWait = true;
                 }

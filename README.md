@@ -68,8 +68,10 @@ It is intended as a research and learning platform for exploring game internals,
 
 This project was **originally forked from `CS2External` by sweeperxz** but has been **extensively rewritten**, with AimBot and ESP modules implemented from the ground up with new architecture and advanced features.
 
-### What's new in v2.0
+### What's new in v2.1
 
+- **Professional Tabbed UI** — A redesigned overlay menu with a sidebar for categories, a header, and a clean content area for settings.
+- **Bezier Aim Smoothing** — New mathematical foundation for humanized aim movement (infrastructure added to `AimingMath`).
 - **Vote Teller** — overlay panel showing the active in-game vote (team, issue ID, Yes/No tallies), team-colored.
 - **FOV Circle** — optional dynamic circle around the crosshair visualising the aim cone (toggle + adjustable radius in the menu).
 - **Config Save / Reload / Reset Defaults** — three new action items in the overlay menu's *General* tab; changes apply in place without restarting the app.
