@@ -72,5 +72,26 @@ namespace CS2GameHelper.Graphics
             else if (value > Math.PI) value -= twoPi;
             return value;
         }
+
+        /// <summary>
+        /// Calculates a point on a Cubic Bezier curve.
+        /// P0: Start, P1: Control 1, P2: Control 2, P3: End
+        /// t: [0, 1]
+        /// </summary>
+        public static Vector2 GetBezierPoint(float t, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)
+        {
+            float u = 1 - t;
+            float tt = t * t;
+            float uu = u * u;
+            float uuu = uu * u;
+            float ttt = tt * t;
+
+            Vector2 p = uuu * p0; // (1-t)^3 * P0
+            p += 3 * uu * t * p1; // 3 * (1-t)^2 * t * P1
+            p += 3 * u * tt * p2; // 3 * (1-t) * t^2 * P2
+            p += ttt * p3;        // t^3 * P3
+
+            return p;
+        }
     }
 }

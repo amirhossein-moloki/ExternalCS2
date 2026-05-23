@@ -24,10 +24,12 @@ namespace CS2GameHelper.Graphics
     private bool _toggleKeyLastState;
     private DateTime _suppressToggleUntil = DateTime.MinValue;
         
-        private readonly Vector2 _menuPosition = new(50, 150);
-        private readonly Vector2 _categorySize = new(200, 30);
-        private readonly Vector2 _itemSize = new(180, 25);
-        private readonly Vector2 _subItemSize = new(160, 22);
+        private readonly Vector2 _menuPosition = new(100, 100);
+        private readonly Vector2 _menuSize = new(700, 450);
+        private readonly float _sidebarWidth = 180f;
+        private readonly float _headerHeight = 40f;
+        private readonly float _categoryHeight = 35f;
+        private readonly float _itemHeight = 30f;
         
         private DateTime _lastKeyPress = DateTime.MinValue;
         private readonly TimeSpan _keyRepeatDelay = TimeSpan.FromMilliseconds(150);
@@ -366,89 +368,117 @@ namespace CS2GameHelper.Graphics
         {
             if (!_isVisible) return;
             
-            // Draw background
-            var bgRect = new SKRect(_menuPosition.X - 10, _menuPosition.Y - 10,
-                _menuPosition.X + 600, _menuPosition.Y + 400);
-            _graphics.DrawRectangle(ToUint(SKColors.Black.WithAlpha(200)),
-                new Vector2(bgRect.Left, bgRect.Top),
-                (float)bgRect.Width, (float)bgRect.Height);
+            // Colors
+            uint colorBg = ToUint(SKColors.Black.WithAlpha(230));
+            uint colorSidebar = ToUint(SKColors.DarkSlateGray.WithAlpha(100));
+            uint colorBorder = ToUint(SKColors.Cyan.WithAlpha(180));
+            uint colorAccent = ToUint(SKColors.Cyan);
+            uint colorText = ToUint(SKColors.White);
+            uint colorTextDim = ToUint(SKColors.Gray);
+            uint colorHighlight = ToUint(SKColors.Yellow);
             
-            // Draw border
-            _graphics.DrawRectangleOutline(ToUint(SKColors.Cyan),
-                new Vector2(bgRect.Left, bgRect.Top),
-                (float)bgRect.Width, (float)bgRect.Height);
+            // Draw Main Background
+            _graphics.DrawRectangle(colorBg, _menuPosition, _menuSize.X, _menuSize.Y);
+            _graphics.DrawRectangleOutline(colorBorder, _menuPosition, _menuSize.X, _menuSize.Y);
             
-            // Draw title
-            _graphics.DrawText("CS2GameHelper Settings", _menuPosition.X, _menuPosition.Y - 5,
-                ToUint(SKColors.Cyan), 16, true);
+            // Draw Sidebar
+            _graphics.DrawRectangle(colorSidebar, _menuPosition, _sidebarWidth, _menuSize.Y);
+            _graphics.DrawLine(colorBorder,
+                new Vector2(_menuPosition.X + _sidebarWidth, _menuPosition.Y),
+                new Vector2(_menuPosition.X + _sidebarWidth, _menuPosition.Y + _menuSize.Y));
             
-            // Draw categories
+            // Draw Header
+            _graphics.DrawLine(colorBorder,
+                new Vector2(_menuPosition.X, _menuPosition.Y + _headerHeight),
+                new Vector2(_menuPosition.X + _menuSize.X, _menuPosition.Y + _headerHeight));
+            _graphics.DrawText("EXTERNAL CS2 v2.0", _menuPosition.X + 15, _menuPosition.Y + 28, colorAccent, 18, true);
+
+            // Draw Sidebar Categories
             for (int i = 0; i < _categories.Count; i++)
             {
                 var category = _categories[i];
-                var pos = _menuPosition + new Vector2(i * (_categorySize.X + 10), 20);
-                var color = i == _selectedCategory ? SKColors.Yellow : SKColors.White;
+                var yPos = _menuPosition.Y + _headerHeight + (i * _categoryHeight);
+                bool isSelected = i == _selectedCategory;
 
-                _graphics.DrawRectangle(ToUint(color.WithAlpha(50)),
-                    pos, _categorySize.X, _categorySize.Y);
-                _graphics.DrawRectangleOutline(ToUint(color),
-                    pos, _categorySize.X, _categorySize.Y);
-                _graphics.DrawText(category.Name, pos.X + 5, pos.Y + 20,
-                    ToUint(color), 12);
+                if (isSelected)
+                {
+                    _graphics.DrawRectangle(ToUint(SKColors.Cyan.WithAlpha(60)),
+                        new Vector2(_menuPosition.X, yPos), _sidebarWidth, _categoryHeight);
+                    _graphics.DrawRectangle(colorAccent,
+                        new Vector2(_menuPosition.X, yPos), 4, _categoryHeight);
+                }
+
+                _graphics.DrawText(category.Name.ToUpper(), _menuPosition.X + 20, yPos + 23,
+                    isSelected ? colorHighlight : colorText, 13, isSelected);
             }
             
-            // Draw items for selected category
+            // Draw Content Area
+            var contentOrigin = new Vector2(_menuPosition.X + _sidebarWidth + 20, _menuPosition.Y + _headerHeight + 25);
             var currentCategory = _categories[_selectedCategory];
+
+            _graphics.DrawText(currentCategory.Name, contentOrigin.X, contentOrigin.Y - 5, colorAccent, 15, true);
+            _graphics.DrawLine(ToUint(SKColors.Cyan.WithAlpha(100)),
+                contentOrigin + new Vector2(0, 5),
+                contentOrigin + new Vector2(200, 5));
+
             for (int i = 0; i < currentCategory.Items.Count; i++)
             {
                 var item = currentCategory.Items[i];
-                var pos = _menuPosition + new Vector2(10, 60 + i * (_itemSize.Y + 5));
-                var color = i == _selectedItem && !_isInSubMenu ? SKColors.Yellow : SKColors.White;
+                var yOffset = 40 + (i * _itemHeight);
+                bool isSelected = i == _selectedItem && !_isInSubMenu;
 
-                _graphics.DrawText($"• {item.Name}: {item.GetValue()}", pos.X, pos.Y + 20,
-                    ToUint(color), 11);
+                uint itemColor = isSelected ? colorHighlight : colorText;
+                _graphics.DrawText(item.Name, contentOrigin.X, contentOrigin.Y + yOffset, itemColor, 12);
+
+                string val = item.GetValue();
+                uint valColor = val == "ON" ? ToUint(SKColors.Lime) : (val == "OFF" ? ToUint(SKColors.Red) : colorAccent);
+                _graphics.DrawText(val, contentOrigin.X + 350, contentOrigin.Y + yOffset, valColor, 12, true);
+
+                if (isSelected)
+                    _graphics.DrawText(">", contentOrigin.X - 15, contentOrigin.Y + yOffset, colorHighlight, 12);
             }
             
-            // Draw sub-items if in submenu
+            // Draw Submenu if active
             if (_isInSubMenu)
             {
                 var subItems = GetCurrentSubItems();
+                var subMenuOrigin = contentOrigin + new Vector2(480, 0);
+
+                // Submenu Background
+                _graphics.DrawRectangle(ToUint(SKColors.Black.WithAlpha(180)),
+                    subMenuOrigin - new Vector2(10, 10), 180, (subItems.Count * _itemHeight) + 40);
+                _graphics.DrawRectangleOutline(colorBorder,
+                    subMenuOrigin - new Vector2(10, 10), 180, (subItems.Count * _itemHeight) + 40);
+
+                _graphics.DrawText("SUB-SETTINGS", subMenuOrigin.X, subMenuOrigin.Y + 5, colorAccent, 11, true);
+
                 for (int i = 0; i < subItems.Count; i++)
                 {
-                    var subItem = subItems[i];
-                    var pos = _menuPosition + new Vector2(250, 60 + i * (_subItemSize.Y + 5));
-                    var color = i == _selectedSubItem ? SKColors.Lime : SKColors.White;
+                    var item = subItems[i];
+                    var yOffset = 30 + (i * 25);
+                    bool isSubSelected = i == _selectedSubItem;
 
-                    _graphics.DrawText($"  {subItem.Name}: {subItem.GetValue()}", pos.X, pos.Y + 18,
-                        ToUint(color), 10);
+                    _graphics.DrawText(item.Name, subMenuOrigin.X, subMenuOrigin.Y + yOffset,
+                        isSubSelected ? colorHighlight : colorText, 10);
+                    _graphics.DrawText(item.GetValue(), subMenuOrigin.X + 120, subMenuOrigin.Y + yOffset,
+                        isSubSelected ? colorHighlight : colorTextDim, 10, true);
                 }
             }
             
-            // Draw instructions
-            var toggleLabel = MenuToggleKey == Keys.None ? "(menu hotkey disabled)" : $"{MenuToggleKeyLabel}: Toggle Menu";
-            var instructions = new[]
-            {
-                toggleLabel,
-                "Arrow Keys: Navigate",
-                "Enter/Space: Select",
-                "ESC: Back/Exit"
-            };
+            // Footer Info
+            _graphics.DrawText($"Toggle: {MenuToggleKeyLabel}  |  Navigate: Arrows  |  Select: Enter",
+                _menuPosition.X + _sidebarWidth + 20, _menuPosition.Y + _menuSize.Y - 15, colorTextDim, 10);
             
-            for (int i = 0; i < instructions.Length; i++)
-            {
-                _graphics.DrawText(instructions[i], _menuPosition.X, _menuPosition.Y + 350 + i * 15,
-                    ToUint(SKColors.Gray), 10);
-            }
-            
-            // Draw editing prompt
+            // Editing prompt
             if (_editingValue)
             {
-                _graphics.DrawRectangle(ToUint(SKColors.Red.WithAlpha(200)),
-                    new Vector2(_menuPosition.X + 200, _menuPosition.Y + 180), 200, 50);
-                _graphics.DrawRectangleOutline(ToUint(SKColors.Red),
-                    new Vector2(_menuPosition.X + 200, _menuPosition.Y + 180), 200, 50);
-                _graphics.DrawText(_editBuffer, _menuPosition.X + 210, _menuPosition.Y + 205,
-                    ToUint(SKColors.White), 12);
+                var promptSize = new Vector2(250, 60);
+                var promptPos = _menuPosition + (_menuSize / 2f) - (promptSize / 2f);
+
+                _graphics.DrawRectangle(ToUint(SKColors.DarkRed.WithAlpha(220)), promptPos, promptSize.X, promptSize.Y);
+                _graphics.DrawRectangleOutline(ToUint(SKColors.Red), promptPos, promptSize.X, promptSize.Y);
+                _graphics.DrawText("WAITING FOR INPUT...", promptPos.X + 25, promptPos.Y + 25, colorText, 13, true);
+                _graphics.DrawText("Press any key to bind", promptPos.X + 45, promptPos.Y + 45, colorTextDim, 10);
             }
         }
         
