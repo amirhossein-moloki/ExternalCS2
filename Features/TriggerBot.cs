@@ -5,6 +5,7 @@ using CS2GameHelper.Data.Entity;
 using CS2GameHelper.Data.Game;
 using CS2GameHelper.Graphics;
 using CS2GameHelper.Core.Data;
+using System.Numerics;
 using CS2GameHelper.Utils;
 using Vector3 = System.Numerics.Vector3;
 using Keys = CS2GameHelper.Utils.Keys;
@@ -41,22 +42,74 @@ public sealed class TriggerBot : ThreadedServiceBase
         if (!ShouldExecuteTriggerBot())
             return;
 
+        if (_gameProcess.Process == null || _gameData.Player == null)
+            return;
+
+        // Try Box-based detection first for better accuracy
+        bool foundViaBox = false;
+        var center = new Vector2(_gameProcess.WindowRectangleClient.Width / 2f, _gameProcess.WindowRectangleClient.Height / 2f);
+
+        foreach (var entity in _gameData.Entities)
+        {
+            if (!entity.IsAlive() || entity.AddressBase == _gameData.Player.AddressBase) continue;
+            if (entity.Team == _gameData.Player.Team) continue;
+
+            var bbox = GetEntityBoundingBox(_gameData.Player, entity);
+            if (bbox == null) continue;
+
+            var (topLeft, bottomRight) = bbox.Value;
+            if (center.X >= topLeft.X && center.X <= bottomRight.X &&
+                center.Y >= topLeft.Y && center.Y <= bottomRight.Y)
+            {
+                foundViaBox = true;
+                break;
+            }
+        }
+
+        if (foundViaBox)
+        {
+            _lastShot = DateTime.Now;
+            ExecuteTrigger();
+            return;
+        }
+
+        // Fallback to m_iIDEntIndex
         var targetEntity = GetTargetEntity();
-        if (targetEntity == IntPtr.Zero)
-            return;
+        if (targetEntity != IntPtr.Zero)
+        {
+            var entityTeam = _gameProcess.Read<int>(targetEntity + Offsets.m_iTeamNum);
+            if (ShouldTriggerOnEntity(entityTeam))
+            {
+                _lastShot = DateTime.Now;
+                ExecuteTrigger();
+            }
+        }
+    }
 
-        if (_gameProcess.Process == null)
-            return;
+    private static (Vector2, Vector2)? GetEntityBoundingBox(Player player, Entity entity)
+    {
+        var matrix = player.MatrixViewProjectionViewport;
+        if (entity.BonePos == null || !entity.BonePos.TryGetValue("head", out var headPos))
+            return null;
 
-        var entityTeam = _gameProcess.Read<int>(targetEntity + Offsets.m_iTeamNum);
-        if (!ShouldTriggerOnEntity(entityTeam))
-            return;
+        var origin = entity.Position;
+        var head = headPos + new Vector3(0, 0, 10);
+        var bottom = origin - new Vector3(0, 0, 5);
 
-        if (!IsAimingAtEntity(targetEntity))
-            return;
+        var headProj = matrix.Transform(head);
+        var bottomProj = matrix.Transform(bottom);
 
-        _lastShot = DateTime.Now;
-        ExecuteTrigger();
+        // headProj.Z and bottomProj.Z contain the W component (distance)
+        if (headProj.Z < 0.001f || bottomProj.Z < 0.001f)
+            return null;
+
+        float height = Math.Abs(headProj.Y - bottomProj.Y);
+        float width = height / 2f;
+
+        var topLeft = new Vector2(headProj.X - width / 2f, headProj.Y);
+        var bottomRight = new Vector2(headProj.X + width / 2f, bottomProj.Y);
+
+        return (topLeft, bottomRight);
     }
 
     private bool ShouldExecuteTriggerBot()

@@ -359,7 +359,7 @@ public static class EspBox
         var headProj = matrix.Transform(head);
         var bottomProj = matrix.Transform(bottom);
 
-        if (headProj.Z >= 1 || bottomProj.Z >= 1)
+        if (headProj.Z < 0.001f || bottomProj.Z < 0.001f)
             return null;
 
         float height = Math.Abs(headProj.Y - bottomProj.Y);

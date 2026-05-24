@@ -26,7 +26,7 @@ public static class GraphicsMath
             MinDepth = 0.0f,
             MaxDepth = 1.0f
         };
-        
+
         return GetMatrixViewport(viewport);
     }
 
@@ -45,16 +45,19 @@ public static class GraphicsMath
 
     public static Vector3 Transform(this Matrix4x4 matrix, Vector3 value)
     {
-        var wInv = 1.0 / (matrix.M14 * value.X + matrix.M24 * value.Y +
-                          matrix.M34 * value.Z + matrix.M44);
+        var w = matrix.M14 * value.X + matrix.M24 * value.Y + matrix.M34 * value.Z + matrix.M44;
+
+        if (w < 0.001f)
+            return new Vector3(0, 0, w);
+
+        var wInv = 1.0 / w;
 
         return new Vector3(
             (float)((matrix.M11 * value.X + matrix.M21 * value.Y +
                     matrix.M31 * value.Z + matrix.M41) * wInv),
             (float)((matrix.M12 * value.X + matrix.M22 * value.Y +
                     matrix.M32 * value.Z + matrix.M42) * wInv),
-            (float)((matrix.M13 * value.X + matrix.M23 * value.Y +
-                    matrix.M33 * value.Z + matrix.M43) * wInv)
+            (float)w
         );
     }
 

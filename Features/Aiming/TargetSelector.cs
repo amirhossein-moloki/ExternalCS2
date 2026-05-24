@@ -35,8 +35,7 @@ namespace CS2GameHelper.Features.Aiming
             foreach (var entity in gameData.Entities.Where(entity =>
                 entity.IsAlive() &&
                 entity.AddressBase != gameData.Player.AddressBase &&
-                entity.Team != gameData.Player.Team &&
-                entity.IsSpotted))
+                entity.Team != gameData.Player.Team))
             {
                 Vector3 targetVelocity = entity.Velocity;
                 float distanceToTarget = Vector3.Distance(playerPos, entity.Position);

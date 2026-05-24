@@ -100,17 +100,22 @@ public abstract class ThreadedServiceBase : IDisposable
         {
             while (_isRunning)
             {
-                FrameAction();
+                try
+                {
+                    FrameAction();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Service Error] {ThreadName}: {ex.Message}");
+                    // Avoid spamming the console too much
+                    Thread.Sleep(100);
+                }
                 Thread.Sleep(ThreadFrameSleep);
             }
         }
         catch (ThreadInterruptedException)
         {
             // expected during shutdown
-        }
-        catch (NullReferenceException)
-        {
-            // legacy behaviour retained for existing services
         }
     }
 
