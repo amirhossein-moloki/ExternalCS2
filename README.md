@@ -43,6 +43,7 @@
 - [Repository Structure](#repository-structure)
 - [Configuration (config.json)](#configuration-configjson)
   - [Full Reference → CONFIG_REFERENCE.md](CONFIG_REFERENCE.md)
+  - [Tutorial & Persian Guide → CONFIG_TUTORIAL.md](CONFIG_TUTORIAL.md)
 - [AimBot & Training internals](#aimbot--training-internals)
   - [Detailed design → AimBot.md](AimBot.md)
 - [Debugging & Common Issues](#debugging--common-issues)

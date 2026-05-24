@@ -311,9 +311,19 @@ public class ModernGraphics : ThreadedServiceBase
         var centerProj = matrix.Value.Transform(center);
         if (centerProj.Z >= 1) return;
 
-        // Approximate screen-space radius
-        var edgeProj = matrix.Value.Transform(center + new Vector3(radius, 0, 0));
+        // More accurate screen-space radius calculation
+        // Project a point that is 'radius' units away from center in a direction perpendicular to view
+        Vector3 viewDir = Vector3.Normalize(center - player.EyePosition);
+        Vector3 up = new Vector3(0, 0, 1);
+        Vector3 right = Vector3.Cross(viewDir, up);
+        if (right.LengthSquared() < 0.001f) right = new Vector3(1, 0, 0);
+        else right = Vector3.Normalize(right);
+
+        var edgeProj = matrix.Value.Transform(center + right * radius);
         float screenRadius = Vector2.Distance(new Vector2(centerProj.X, centerProj.Y), new Vector2(edgeProj.X, edgeProj.Y));
+
+        // Clamp radius to a reasonable range to avoid "illogical" sizing
+        screenRadius = Math.Clamp(screenRadius, 1f, 500f);
 
         if (filled)
             DrawCircleFilled(centerProj.X, centerProj.Y, screenRadius, color);
