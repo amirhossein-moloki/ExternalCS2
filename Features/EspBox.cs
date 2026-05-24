@@ -142,7 +142,10 @@ public static class EspBox
         // === Бокс ===
         float width = bottomRight.X - topLeft.X;
         float height = bottomRight.Y - topLeft.Y;
-        graphics.DrawRectOutline(topLeft.X, topLeft.Y, width, height, boxColor);
+        if (config.ShowBox)
+        {
+            graphics.DrawRectOutline(topLeft.X, topLeft.Y, width, height, boxColor);
+        }
 
         float textY = topLeft.Y - 16;
         float centerX = (topLeft.X + bottomRight.X) / 2f;
@@ -179,29 +182,89 @@ public static class EspBox
         // === Полоска здоровья ===
         if (config.ShowHealthBar)
         {
-            float healthBarLeft = topLeft.X - 8f;
-            float healthBarHeight = height;
-            float healthBarWidth = 4f;
-            
             float healthPercentage = Math.Clamp(entity.Health / 100f, 0f, 1f);
-            float filledHeight = healthBarHeight * healthPercentage;
-            float filledTopY = topLeft.Y + (healthBarHeight - filledHeight);
-            
             uint healthBarColor = entity.Health > 60 ? EspColor.Green : 
                                    entity.Health > 30 ? EspColor.Yellow : EspColor.Red;
 
-            graphics.DrawRect(healthBarLeft, topLeft.Y, healthBarWidth, healthBarHeight, 0x80000000);
-            graphics.DrawRect(healthBarLeft, filledTopY, healthBarWidth, filledHeight, healthBarColor);
-            graphics.DrawRectOutline(healthBarLeft - 1, topLeft.Y - 1, healthBarWidth + 2, healthBarHeight + 2, EspColor.Black);
+            float hbX = 0, hbY = 0, hbW = 0, hbH = 0;
+            float hbFilledX = 0, hbFilledY = 0, hbFilledW = 0, hbFilledH = 0;
+
+            switch (config.HealthPosition)
+            {
+                case 0: // Left
+                    hbX = topLeft.X - 8f;
+                    hbY = topLeft.Y;
+                    hbW = 4f;
+                    hbH = height;
+                    hbFilledX = hbX;
+                    hbFilledY = hbY + (hbH * (1f - healthPercentage));
+                    hbFilledW = hbW;
+                    hbFilledH = hbH * healthPercentage;
+                    break;
+                case 1: // Top
+                    hbX = topLeft.X;
+                    hbY = topLeft.Y - 8f;
+                    hbW = width;
+                    hbH = 4f;
+                    hbFilledX = hbX;
+                    hbFilledY = hbY;
+                    hbFilledW = hbW * healthPercentage;
+                    hbFilledH = hbH;
+                    break;
+                case 2: // Right
+                    hbX = bottomRight.X + 4f;
+                    hbY = topLeft.Y;
+                    hbW = 4f;
+                    hbH = height;
+                    hbFilledX = hbX;
+                    hbFilledY = hbY + (hbH * (1f - healthPercentage));
+                    hbFilledW = hbW;
+                    hbFilledH = hbH * healthPercentage;
+                    break;
+                case 3: // Bottom
+                    hbX = topLeft.X;
+                    hbY = bottomRight.Y + 4f;
+                    hbW = width;
+                    hbH = 4f;
+                    hbFilledX = hbX;
+                    hbFilledY = hbY;
+                    hbFilledW = hbW * healthPercentage;
+                    hbFilledH = hbH;
+                    break;
+            }
+
+            graphics.DrawRect(hbX, hbY, hbW, hbH, 0x80000000);
+            graphics.DrawRect(hbFilledX, hbFilledY, hbFilledW, hbFilledH, healthBarColor);
+            graphics.DrawRectOutline(hbX - 1, hbY - 1, hbW + 2, hbH + 2, EspColor.Black);
         }
 
         // === Текст здоровья ===
         if (config.ShowHealthText)
         {
             string healthText = entity.Health.ToString();
-            int healthX = (int)(bottomRight.X + 2);
-            int healthY = (int)(topLeft.Y + height / 2f);
-            graphics.DrawText(healthText, healthX, healthY, EspColor.White);
+            float tx = 0, ty = 0;
+            var textSize = graphics.MeasureText(healthText);
+
+            switch (config.HealthPosition)
+            {
+                case 0: // Left
+                    tx = topLeft.X - 12f - textSize.X;
+                    ty = topLeft.Y + (height / 2f) - (textSize.Y / 2f);
+                    break;
+                case 1: // Top
+                    tx = centerX - (textSize.X / 2f);
+                    ty = topLeft.Y - 12f - textSize.Y;
+                    break;
+                case 2: // Right
+                    tx = bottomRight.X + 12f;
+                    ty = topLeft.Y + (height / 2f) - (textSize.Y / 2f);
+                    break;
+                case 3: // Bottom
+                    tx = centerX - (textSize.X / 2f);
+                    ty = bottomRight.Y + 12f;
+                    break;
+            }
+            graphics.DrawText(healthText, tx, ty, EspColor.White);
         }
 
         // === Броня / Шлем ===

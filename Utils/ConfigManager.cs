@@ -12,6 +12,7 @@ public class ConfigManager
     public bool BombTimer { get; set; } = true;
     // УДАЛЕНО: public bool EspAimCrosshair { get; set; } = true;
     public bool SkeletonEsp { get; set; } = true;
+    public bool SkeletonShowHeadCircle { get; set; } = true;
     public bool TriggerBot { get; set; } = true;
     public Keys AimBotKey { get; set; } = Keys.LButton;
     public Keys TriggerBotKey { get; set; } = Keys.LMenu;
@@ -32,9 +33,11 @@ public class ConfigManager
         public class BoxConfig
         {
             public bool Enabled { get; set; } = true;
+            public bool ShowBox { get; set; } = true;
             public bool ShowName { get; set; } = true;
             public bool ShowHealthBar { get; set; } = true;
             public bool ShowHealthText { get; set; } = true;
+            public int HealthPosition { get; set; } = 0; // 0: Left, 1: Top, 2: Right, 3: Bottom
             public bool ShowDistance { get; set; } = true;
             public bool ShowWeaponIcon { get; set; } = true;
             public bool ShowArmor { get; set; } = true;
@@ -225,6 +228,7 @@ public class ConfigManager
         AimBotAutoShoot = other.AimBotAutoShoot;
         BombTimer = other.BombTimer;
         SkeletonEsp = other.SkeletonEsp;
+        SkeletonShowHeadCircle = other.SkeletonShowHeadCircle;
         TriggerBot = other.TriggerBot;
         AimBotKey = other.AimBotKey;
         TriggerBotKey = other.TriggerBotKey;
@@ -238,9 +242,11 @@ public class ConfigManager
 
         // Box
         Esp.Box.Enabled = other.Esp.Box.Enabled;
+        Esp.Box.ShowBox = other.Esp.Box.ShowBox;
         Esp.Box.ShowName = other.Esp.Box.ShowName;
         Esp.Box.ShowHealthBar = other.Esp.Box.ShowHealthBar;
         Esp.Box.ShowHealthText = other.Esp.Box.ShowHealthText;
+        Esp.Box.HealthPosition = other.Esp.Box.HealthPosition;
         Esp.Box.ShowDistance = other.Esp.Box.ShowDistance;
         Esp.Box.ShowWeaponIcon = other.Esp.Box.ShowWeaponIcon;
         Esp.Box.ShowArmor = other.Esp.Box.ShowArmor;
@@ -355,6 +361,7 @@ public class ConfigManager
             BombTimer = true,
             // УДАЛЕНО: EspAimCrosshair = true,
             SkeletonEsp = true,
+            SkeletonShowHeadCircle = true,
             TriggerBot = true,
             AimBotKey = Keys.LButton,
             TriggerBotKey = Keys.LMenu,
@@ -366,9 +373,11 @@ public class ConfigManager
                 Box = new EspConfig.BoxConfig
                 {
                     Enabled = true,
+                    ShowBox = true,
                     ShowName = true,
                     ShowHealthBar = true,
                     ShowHealthText = true,
+                    HealthPosition = 0,
                     ShowDistance = true,
                     ShowWeaponIcon = true,
                     ShowArmor = true,

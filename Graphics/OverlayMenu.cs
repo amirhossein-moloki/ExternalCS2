@@ -80,9 +80,11 @@ namespace CS2GameHelper.Graphics
                 new SubMenuItem("Box ESP", new List<MenuItem>
                 {
                     new ToggleMenuItem("Enabled", () => _config.Esp.Box.Enabled, v => { _config.Esp.Box.Enabled = v; }),
+                    new ToggleMenuItem("Show Box", () => _config.Esp.Box.ShowBox, v => { _config.Esp.Box.ShowBox = v; }),
                     new ToggleMenuItem("Show Name", () => _config.Esp.Box.ShowName, v => { _config.Esp.Box.ShowName = v; }),
                     new ToggleMenuItem("Show Health Bar", () => _config.Esp.Box.ShowHealthBar, v => { _config.Esp.Box.ShowHealthBar = v; }),
                     new ToggleMenuItem("Show Health Text", () => _config.Esp.Box.ShowHealthText, v => { _config.Esp.Box.ShowHealthText = v; }),
+                    new SliderMenuItem("Health Position", () => _config.Esp.Box.HealthPosition, v => { _config.Esp.Box.HealthPosition = (int)Math.Round(v); }, 0, 3, 1, "0"),
                     new ToggleMenuItem("Show Distance", () => _config.Esp.Box.ShowDistance, v => { _config.Esp.Box.ShowDistance = v; }),
                     new ToggleMenuItem("Show Weapon", () => _config.Esp.Box.ShowWeaponIcon, v => { _config.Esp.Box.ShowWeaponIcon = v; }),
                     new ToggleMenuItem("Show Armor", () => _config.Esp.Box.ShowArmor, v => { _config.Esp.Box.ShowArmor = v; }),
@@ -111,7 +113,11 @@ namespace CS2GameHelper.Graphics
             
             _categories.Add(new MenuCategory("Visuals", new List<MenuItem>
             {
-                new ToggleMenuItem("Skeleton ESP", () => _config.SkeletonEsp, v => { _config.SkeletonEsp = v; }),
+                new SubMenuItem("Skeleton ESP", new List<MenuItem>
+                {
+                    new ToggleMenuItem("Enabled", () => _config.SkeletonEsp, v => { _config.SkeletonEsp = v; }),
+                    new ToggleMenuItem("Show Head Circle", () => _config.SkeletonShowHeadCircle, v => { _config.SkeletonShowHeadCircle = v; })
+                }),
                 new ToggleMenuItem("Bomb Timer", () => _config.BombTimer, v => { _config.BombTimer = v; }),
                 new ToggleMenuItem("Spectator List", () => _config.SpectatorList.Enabled, v => { _config.SpectatorList.Enabled = v; }),
                 new SubMenuItem("Vote Teller", new List<MenuItem>

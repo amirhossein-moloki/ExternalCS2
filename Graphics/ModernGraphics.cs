@@ -302,6 +302,25 @@ public class ModernGraphics : ThreadedServiceBase
         DrawLine(color, new Vector2(startProj.X, startProj.Y), new Vector2(endProj.X, endProj.Y));
     }
 
+    public void DrawCircleWorld(uint color, Vector3 center, float radius, bool filled = false)
+    {
+        var player = _gameData.Player;
+        var matrix = player?.MatrixViewProjectionViewport;
+        if (player == null || matrix == null) return;
+
+        var centerProj = matrix.Value.Transform(center);
+        if (centerProj.Z >= 1) return;
+
+        // Approximate screen-space radius
+        var edgeProj = matrix.Value.Transform(center + new Vector3(radius, 0, 0));
+        float screenRadius = Vector2.Distance(new Vector2(centerProj.X, centerProj.Y), new Vector2(edgeProj.X, edgeProj.Y));
+
+        if (filled)
+            DrawCircleFilled(centerProj.X, centerProj.Y, screenRadius, color);
+        else
+            DrawCircleOutline(centerProj.X, centerProj.Y, screenRadius, color);
+    }
+
     public Vector2 MeasureText(string text, float fontSize = 12, bool useCustomFont = false)
     {
         if (string.IsNullOrEmpty(text)) return Vector2.Zero;
@@ -546,7 +565,7 @@ public class ModernGraphics : ThreadedServiceBase
                 {
                     EspAimCrosshair.Draw(this, config);
                 }
-                if (config.SkeletonEsp) SkeletonEsp.Draw(this);
+                if (config.SkeletonEsp) SkeletonEsp.Draw(this, config);
                 if (config.BombTimer) BombTimer.Draw(this);
                 if (config.VoteTeller?.Enabled == true) VoteTeller.Draw(this, config);
                 if (config.SpectatorList.Enabled) SpectatorList.Draw(this, config);
