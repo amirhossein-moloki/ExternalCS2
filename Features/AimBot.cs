@@ -27,7 +27,7 @@ namespace CS2GameHelper.Features
         private const int UserMouseDeltaResetMs = 50;
         private const int AimEventWindowMs = 1000;
 
-        private readonly ConfigManager _config = ConfigManager.Load();
+        private readonly ConfigManager _config;
         private readonly object _stateLock = new();
         private readonly Random _humanizationRandom;
 
@@ -69,11 +69,12 @@ namespace CS2GameHelper.Features
         private int _lastTargetIdForAccel = -1;
         private int _aimBotLastDamage;
 
-        public AimBot(GameProcess gameProcess, GameData gameData, UserInputHandler inputHandler)
+        public AimBot(GameProcess gameProcess, GameData gameData, UserInputHandler inputHandler, ConfigManager config)
         {
             GameProcess = gameProcess;
             GameData = gameData;
-            _inputHandler = inputHandler; // ← используем внешний handler
+            _inputHandler = inputHandler;
+            _config = config;
 
             var tuning = _config.AimBotTuning ?? new ConfigManager.AimBotTuningConfig();
             _humanReactThreshold = tuning.HumanReactThreshold;
