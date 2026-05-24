@@ -241,15 +241,16 @@ namespace CS2GameHelper.Features
 
                 var shouldWait = false;
 
-                if (isAutoMode && aimResult.Found && (DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
+                if (aimResult.Found && (isAutoMode || isManualMode))
                 {
-                    lock (_stateLock) { _currentState = AimBotState.DownSuppressed; }
-                    shouldWait = TryMouseDown();
-                    _lastShotTime = DateTime.Now;
-                }
-                else if (isManualMode)
-                {
-                    shouldWait = TryMouseDown();
+                    if ((DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
+                    {
+                        Utility.MouseLeftDown();
+                        Thread.Sleep(10);
+                        Utility.MouseLeftUp();
+                        _lastShotTime = DateTime.Now;
+                        shouldWait = true;
+                    }
                 }
 
                 if (aimPixels.X != 0 || aimPixels.Y != 0)
@@ -334,13 +335,6 @@ namespace CS2GameHelper.Features
             }
         }
 
-        private bool TryMouseDown()
-        {
-            var mouseDown = false;
-            lock (_stateLock) { if (_currentState == AimBotState.DownSuppressed) { mouseDown = true; _currentState = AimBotState.Down; } }
-            if (mouseDown) Utility.MouseLeftDown();
-            return mouseDown;
-        }
 
         private void ApplyHumanizedAimAdjustments(ref Point aimPixels, AimTargetResult aimResult)
         {

@@ -36,7 +36,7 @@ public sealed class TriggerBot : ThreadedServiceBase
 
     protected override string ThreadName => nameof(TriggerBot);
 
-    protected override async void FrameAction()
+    protected override void FrameAction()
     {
         if (!ShouldExecuteTriggerBot())
             return;
@@ -55,8 +55,8 @@ public sealed class TriggerBot : ThreadedServiceBase
         if (!IsAimingAtEntity(targetEntity))
             return;
 
-        await ExecuteTrigger();
         _lastShot = DateTime.Now;
+        ExecuteTrigger();
     }
 
     private bool ShouldExecuteTriggerBot()
@@ -132,10 +132,13 @@ public sealed class TriggerBot : ThreadedServiceBase
 
     private bool IsHotKeyDown() => _inputHandler.IsKeyDown(_triggerBotHotKey);
 
-    private static async Task ExecuteTrigger()
+    private void ExecuteTrigger()
     {
-        await Task.Delay(TriggerDelayMs);
+        if (TriggerDelayMs > 0)
+            Thread.Sleep(TriggerDelayMs);
+
         Utility.MouseLeftDown();
+        Thread.Sleep(10);
         Utility.MouseLeftUp();
     }
 
