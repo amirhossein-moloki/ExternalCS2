@@ -41,8 +41,8 @@ namespace CS2GameHelper.Features
         private readonly int _aimUpdateIntervalMs;
         private readonly double _aimBotSmoothing;
 
-        private static double _anglePerPixelHorizontal = 1;
-        private static double _anglePerPixelVertical = 1;
+        private static double _anglePerPixelHorizontal = 0.0006;
+        private static double _anglePerPixelVertical = 0.0006;
 
         private readonly CompositeAimProvider _correctionProvider;
         private readonly TargetSelector _targetSelector;
@@ -237,18 +237,28 @@ namespace CS2GameHelper.Features
                     adapt *= 0.5;
 
                 double smoothing = Math.Max(1.0, _dynamicSmoothing);
-                aimPixels.X = (int)(aimPixels.X * adapt / smoothing);
-                aimPixels.Y = (int)(aimPixels.Y * adapt / smoothing);
+                double finalX = aimPixels.X * adapt / smoothing;
+                double finalY = aimPixels.Y * adapt / smoothing;
+
+                // Humanization/Rounding fix: If the value is very small but not zero,
+                // we should round it instead of truncating to zero,
+                // to avoid "mushy" feel when small adjustments are needed.
+                aimPixels.X = (int)(Math.Abs(finalX) > 0.01 && Math.Abs(finalX) < 1.0 ? Math.Sign(finalX) : Math.Round(finalX));
+                aimPixels.Y = (int)(Math.Abs(finalY) > 0.01 && Math.Abs(finalY) < 1.0 ? Math.Sign(finalY) : Math.Round(finalY));
 
                 var shouldWait = false;
 
-                if (aimResult.Found && (isAutoMode || isManualMode))
+                if (aimResult.Found && isAutoMode)
                 {
                     if ((DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
                     {
                         Utility.MouseLeftDown();
                         Thread.Sleep(10);
-                        Utility.MouseLeftUp();
+                        // Only release if the user isn't manually holding the fire button
+                        if (!_inputHandler.IsKeyDown(Keys.LButton))
+                        {
+                            Utility.MouseLeftUp();
+                        }
                         _lastShotTime = DateTime.Now;
                         shouldWait = true;
                     }
@@ -261,8 +271,8 @@ namespace CS2GameHelper.Features
                         // Use Bezier-augmented movement for larger jumps to look more human
                         var start = Vector2.Zero;
                         var end = new Vector2(aimPixels.X, aimPixels.Y);
-                        var ctrl1 = new Vector2(aimPixels.X * 0.25f, aimPixels.Y * 0.1f + _humanizationRandom.Next(-2, 2));
-                        var ctrl2 = new Vector2(aimPixels.X * 0.75f, aimPixels.Y * 0.9f + _humanizationRandom.Next(-2, 2));
+                        var ctrl1 = new Vector2(aimPixels.X * 0.25f, (float)(aimPixels.Y * 0.1f + _humanizationRandom.Next(-2, 2)));
+                        var ctrl2 = new Vector2(aimPixels.X * 0.75f, (float)(aimPixels.Y * 0.9f + _humanizationRandom.Next(-2, 2)));
 
                         // Sample the Bezier path
                         var p1 = AimingMath.GetBezierPoint(0.5f, start, ctrl1, ctrl2, end);
@@ -397,22 +407,26 @@ namespace CS2GameHelper.Features
                 CalibrationMeasureHorizontalAnglePerPixel(100),
                 CalibrationMeasureHorizontalAnglePerPixel(-200),
                 CalibrationMeasureHorizontalAnglePerPixel(300)
-            }.Where(sample => sample > 0).ToList();
+            }.Where(sample => sample > 0 && !double.IsInfinity(sample) && !double.IsNaN(sample)).ToList();
 
             if (horizontalSamples.Count > 0)
                 _anglePerPixelHorizontal = horizontalSamples.Average();
+            else
+                _anglePerPixelHorizontal = 0.0006; // Fallback for 400-800 DPI typical range
 
             var verticalSamples = new[]
             {
                 CalibrationMeasureVerticalAnglePerPixel(60),
                 CalibrationMeasureVerticalAnglePerPixel(-120),
                 CalibrationMeasureVerticalAnglePerPixel(180)
-            }.Where(sample => sample > 0).ToList();
+            }.Where(sample => sample > 0 && !double.IsInfinity(sample) && !double.IsNaN(sample)).ToList();
 
             if (verticalSamples.Count > 0)
                 _anglePerPixelVertical = verticalSamples.Average();
             else
                 _anglePerPixelVertical = _anglePerPixelHorizontal;
+
+            Console.WriteLine($"[AimBot] Calibrated: H={_anglePerPixelHorizontal:F8}, V={_anglePerPixelVertical:F8}");
         }
 
         private double CalibrationMeasureHorizontalAnglePerPixel(int deltaPixels)
