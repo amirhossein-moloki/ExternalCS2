@@ -179,10 +179,10 @@ public abstract class Offsets
         destData.m_fFlags = GetField(classes, "C_BaseEntity", "m_fFlags");
         destData.m_vOldOrigin = GetField(classes, "C_BasePlayerPawn", "m_vOldOrigin");
         destData.m_vecViewOffset = GetField(classes, "C_BaseModelEntity", "m_vecViewOffset");
-        destData.m_aimPunchAngle = GetField(classes, "CCSPlayer_AimPunchServices", "m_aimPunchAngle");
+        destData.m_aimPunchAngle = GetField(classes, "C_CSPlayerPawn", "m_aimPunchAngle");
         destData.m_modelState = GetField(classes, "CSkeletonInstance", "m_modelState");
         destData.m_pGameSceneNode = GetField(classes, "C_BaseEntity", "m_pGameSceneNode");
-        destData.m_iIDEntIndex = GetField(classes, "C_CSPlayerPawnBase", "m_iIDEntIndex");
+        destData.m_iIDEntIndex = GetField(classes, "C_CSPlayerPawn", "m_iIDEntIndex");
         destData.m_lifeState = GetField(classes, "C_BaseEntity", "m_lifeState");
         destData.m_iHealth = GetField(classes, "C_BaseEntity", "m_iHealth");
         destData.m_iTeamNum = GetField(classes, "C_BaseEntity", "m_iTeamNum");
