@@ -307,7 +307,7 @@ public class ConfigManager
         AimBotTuning.HumanizationSeed = other.AimBotTuning.HumanizationSeed;
     }
 
-    public static void Save(ConfigManager options)
+    public static void Save(ConfigManager options, string fileName = ConfigFile)
     {
         try
         {
@@ -319,12 +319,30 @@ public class ConfigManager
             jsonOptions.Converters.Add(new KeysJsonConverter());
 
             var json = JsonSerializer.Serialize(options, jsonOptions);
-            File.WriteAllText(ConfigFile, json);
+            File.WriteAllText(fileName, json);
         }
         catch
         {
             // Игнор
         }
+    }
+
+    public static string Export(ConfigManager options)
+    {
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        jsonOptions.Converters.Add(new KeysJsonConverter());
+        return JsonSerializer.Serialize(options, jsonOptions);
+    }
+
+    public static ConfigManager? Import(string json)
+    {
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            options.Converters.Add(new KeysJsonConverter());
+            return JsonSerializer.Deserialize<ConfigManager>(json, options);
+        }
+        catch { return null; }
     }
 
     public static ConfigManager Default()

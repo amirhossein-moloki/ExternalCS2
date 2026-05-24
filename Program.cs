@@ -63,6 +63,9 @@ public sealed class Program : IDisposable
         {
             _voteTeller.Start();
         }
+
+        // Discovery of features for the Management List
+        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _bombTimer, _voteTeller, _graphics);
     }
 
     public static void Main()

@@ -1,3 +1,4 @@
+using CS2GameHelper.Utils.Registry;
 using System;
 using System.Threading.Tasks;
 using CS2GameHelper.Data.Entity;
@@ -10,6 +11,7 @@ using Keys = CS2GameHelper.Utils.Keys;
 
 namespace CS2GameHelper.Features;
 
+[Feature("triggerbot", "Triggerbot", "Triggerbot")]
 public sealed class TriggerBot : ThreadedServiceBase
 {
     private const float MaxSpeedThreshold = 250f;      // ~макс. скорость бега в CS2

@@ -1,3 +1,4 @@
+using CS2GameHelper.Utils.Registry;
 using CS2GameHelper.Utils;
 using SkiaSharp;
 

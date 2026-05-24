@@ -1,3 +1,4 @@
+using CS2GameHelper.Utils.Registry;
 using System.Numerics;
 using CS2GameHelper.Core.Data;
 using CS2GameHelper.Data.Entity;
