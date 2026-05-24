@@ -12,12 +12,15 @@ using CS2GameHelper.Utils;
 using Point = System.Drawing.Point;
 using Keys = CS2GameHelper.Utils.Keys;
 
+using CS2GameHelper.Utils.Registry;
+
 namespace CS2GameHelper.Features
 {
     public enum AimBotState { Up, DownSuppressed, Down }
 
     public record AimTargetResult(bool Found, Vector3 TargetPosition, Vector2 AimAngles, float Distance, int TargetId, Vector3 TargetVelocity);
 
+    [Feature("aimbot", "Legit Aimbot", "Aimbot")]
     public class AimBot : ThreadedServiceBase
     {
         private const int SuppressMs = 200;

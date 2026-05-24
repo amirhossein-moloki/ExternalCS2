@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Globalization;
 using CS2GameHelper.Utils;
+using CS2GameHelper.Utils.Registry;
 using SkiaSharp;
 using Keys = CS2GameHelper.Utils.Keys;
 
@@ -127,6 +128,34 @@ namespace CS2GameHelper.Graphics
                 new SliderMenuItem("Text Duration", () => _config.HitSound.TextDurationSeconds, v => { _config.HitSound.TextDurationSeconds = v; }, 0.5, 3.0, 0.1, "0.0"),
                 new SliderMenuItem("Headshot Threshold", () => _config.HitSound.HeadshotDamageThreshold, v => { _config.HitSound.HeadshotDamageThreshold = (int)Math.Round(v); }, 50, 200, 5, "0")
             }));
+
+            var registryItems = new List<MenuItem>();
+            foreach (var feature in FeatureRegistry.Features)
+            {
+                registryItems.Add(new ToggleMenuItem(feature.DisplayName,
+                    () => feature.Enabled,
+                    v => {
+                        if (v != feature.Enabled) ManagementList.ToggleFeature(feature);
+                    }));
+            }
+
+            _categories.Add(new MenuCategory("Registry", registryItems));
+
+            _categories.Add(new MenuCategory("Configs", new List<MenuItem>
+            {
+                new ActionMenuItem("Export to Clip", () => {
+                    var str = ConfigManager.Export(_config);
+                    // System.Windows.Forms.Clipboard.SetText(str);
+                    ManagementList.AddLog("Config exported.");
+                    return true;
+                }),
+                new ActionMenuItem("Import from Clip", () => {
+                    ManagementList.AddLog("Import not supported in headless mode.");
+                    return false;
+                })
+            }));
+
+            _categories.Add(new MenuCategory("Stats/Log", new List<MenuItem>()));
         }
         
         public void Toggle()
@@ -368,14 +397,15 @@ namespace CS2GameHelper.Graphics
         {
             if (!_isVisible) return;
             
-            // Colors
-            uint colorBg = ToUint(SKColors.Black.WithAlpha(230));
-            uint colorSidebar = ToUint(SKColors.DarkSlateGray.WithAlpha(100));
-            uint colorBorder = ToUint(SKColors.Cyan.WithAlpha(180));
-            uint colorAccent = ToUint(SKColors.Cyan);
-            uint colorText = ToUint(SKColors.White);
-            uint colorTextDim = ToUint(SKColors.Gray);
-            uint colorHighlight = ToUint(SKColors.Yellow);
+            // Colors (GitHub Dark Theme)
+            uint colorBg = 0xFD0D1117;        // #0D1117 (99% Alpha)
+            uint colorSidebar = 0xFF161B22;   // #161B22
+            uint colorBorder = 0xFF30363D;    // #30363D
+            uint colorAccent = 0xFF2EA043;    // #2EA043 (Green)
+            uint colorPrimary = 0xFF58A6FF;   // #58A6FF (Blue)
+            uint colorText = 0xFFC9D1D9;      // #C9D1D9
+            uint colorTextDim = 0xFF8B949E;   // #8B949E
+            uint colorHighlight = 0xFFFFFFFF; // White
             
             // Draw Main Background
             _graphics.DrawRectangle(colorBg, _menuPosition, _menuSize.X, _menuSize.Y);
@@ -391,7 +421,7 @@ namespace CS2GameHelper.Graphics
             _graphics.DrawLine(colorBorder,
                 new Vector2(_menuPosition.X, _menuPosition.Y + _headerHeight),
                 new Vector2(_menuPosition.X + _menuSize.X, _menuPosition.Y + _headerHeight));
-            _graphics.DrawText("EXTERNAL CS2 v2.0", _menuPosition.X + 15, _menuPosition.Y + 28, colorAccent, 18, true);
+            _graphics.DrawText("CS2 MANAGEMENT", _menuPosition.X + 15, _menuPosition.Y + 28, colorPrimary, 18, true);
 
             // Draw Sidebar Categories
             for (int i = 0; i < _categories.Count; i++)
@@ -402,9 +432,9 @@ namespace CS2GameHelper.Graphics
 
                 if (isSelected)
                 {
-                    _graphics.DrawRectangle(ToUint(SKColors.Cyan.WithAlpha(60)),
+                    _graphics.DrawRectangle(0x4058A6FF,
                         new Vector2(_menuPosition.X, yPos), _sidebarWidth, _categoryHeight);
-                    _graphics.DrawRectangle(colorAccent,
+                    _graphics.DrawRectangle(colorPrimary,
                         new Vector2(_menuPosition.X, yPos), 4, _categoryHeight);
                 }
 
@@ -416,12 +446,25 @@ namespace CS2GameHelper.Graphics
             var contentOrigin = new Vector2(_menuPosition.X + _sidebarWidth + 20, _menuPosition.Y + _headerHeight + 20);
             var currentCategory = _categories[_selectedCategory];
 
+            if (currentCategory.Name == "Stats/Log")
+            {
+                _graphics.DrawText("RECENT ACTIVITY LOG", contentOrigin.X, contentOrigin.Y + 10, colorPrimary, 12, true);
+                var logs = ManagementList.Logs;
+                for (int i = 0; i < logs.Count; i++)
+                {
+                    var log = logs[i];
+                    _graphics.DrawText($"[{log.Timestamp}]", contentOrigin.X, contentOrigin.Y + 40 + (i * 20), colorTextDim, 10);
+                    _graphics.DrawText(log.Message, contentOrigin.X + 70, contentOrigin.Y + 40 + (i * 20), colorText, 10);
+                }
+                return;
+            }
+
             // Table Header
-            uint colorTableHeader = ToUint(SKColors.DarkSlateGray.WithAlpha(150));
+            uint colorTableHeader = colorSidebar;
             _graphics.DrawRectangle(colorTableHeader, contentOrigin - new Vector2(5, 5), _menuSize.X - _sidebarWidth - 30, 25);
-            _graphics.DrawText("FEATURE NAME", contentOrigin.X + 10, contentOrigin.Y + 12, colorAccent, 10, true);
-            _graphics.DrawText("VALUE", contentOrigin.X + 280, contentOrigin.Y + 12, colorAccent, 10, true);
-            _graphics.DrawText("KEYBIND", contentOrigin.X + 420, contentOrigin.Y + 12, colorAccent, 10, true);
+            _graphics.DrawText("FEATURE NAME", contentOrigin.X + 10, contentOrigin.Y + 12, colorPrimary, 10, true);
+            _graphics.DrawText("VALUE", contentOrigin.X + 280, contentOrigin.Y + 12, colorPrimary, 10, true);
+            _graphics.DrawText("KEYBIND", contentOrigin.X + 420, contentOrigin.Y + 12, colorPrimary, 10, true);
 
             for (int i = 0; i < currentCategory.Items.Count; i++)
             {

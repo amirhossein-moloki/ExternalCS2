@@ -1,3 +1,4 @@
+using CS2GameHelper.Utils.Registry;
 using System;
 using CS2GameHelper.Data.Game;
 using CS2GameHelper.Graphics;
