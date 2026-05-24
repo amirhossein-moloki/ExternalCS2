@@ -37,7 +37,7 @@ public static class SkeletonEsp
         ("leg_lower_R", "ankle_R")
     ];
 
-    public static void Draw(ModernGraphics graphics)
+    public static void Draw(ModernGraphics graphics, ConfigManager fullConfig)
     {
         var player = graphics.GameData.Player;
         var entities = graphics.GameData.Entities;
@@ -56,6 +56,11 @@ public static class SkeletonEsp
 
             var color = GetTeamColor(entity.Team);
             DrawSkeleton(graphics, entity, color);
+
+            if (fullConfig.SkeletonShowHeadCircle)
+            {
+                DrawHeadCircle(graphics, entity, color);
+            }
         }
     }
 
@@ -68,6 +73,16 @@ public static class SkeletonEsp
     private static uint GetTeamColor(Team team)
     {
         return team == Team.Terrorists ? 0xFFFFFF00 : 0xFF0000FF; // Yellow : Blue
+    }
+
+    private static void DrawHeadCircle(ModernGraphics graphics, Entity entity, uint color)
+    {
+        var bonePositions = entity.BonePos;
+        if (bonePositions == null || !bonePositions.TryGetValue("head", out var headPos))
+            return;
+
+        // Radius of head circle in world units (roughly 4-5 inches)
+        graphics.DrawCircleWorld(color, headPos, 4f);
     }
 
     private static void DrawSkeleton(ModernGraphics graphics, Entity entity, uint color)
