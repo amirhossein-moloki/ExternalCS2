@@ -9,6 +9,7 @@ public class Entity : EntityBase
 {
     private readonly ConcurrentDictionary<string, Vector3> _bonePositions;
     private bool _dormant = true;
+    private int _boneUpdateCounter = 0;
 
     public Entity(int index)
     {
@@ -26,7 +27,7 @@ public class Entity : EntityBase
     public IReadOnlyDictionary<string, Vector3> BonePos => _bonePositions;
     public int Id { get; }
 
-    public IntPtr LastAttacker { get; set; } 
+    public IntPtr LastAttacker { get; set; }
     public float LastDamageTime { get; set; }
 
     public override bool IsAlive()
@@ -65,6 +66,8 @@ public class Entity : EntityBase
         if (!base.Update(gameProcess)) return false;
 
         _dormant = gameProcess.Process != null && gameProcess.Read<bool>(AddressBase + Offsets.m_bDormant);
+        if (_dormant) return true; // Early exit if dormant
+
         IsSpotted = gameProcess.Process != null && gameProcess.Read<bool>(AddressBase + Offsets.m_entitySpottedState + 0x8);
         IsInScope = gameProcess.Process != null ? gameProcess.Read<int>(AddressBase + Offsets.m_bIsScoped) : 0;
         FlashAlpha = gameProcess.Process != null ? gameProcess.Read<int>(AddressBase + Offsets.m_flFlashDuration) : 0;
@@ -80,10 +83,18 @@ public class Entity : EntityBase
                 LastAttacker = gameProcess.Read<IntPtr>(AddressBase + Offsets.m_hLastAttacker);
                 LastDamageTime = gameProcess.Read<float>(AddressBase + Offsets.m_flDeathInfoTime);
             }
+            return true;
         }
 
-    // UpdateBonePositions already checks for null internally; suppress nullable analysis here.
-    return !IsAlive() || UpdateBonePositions(gameProcess!);
+        // Bone update throttling
+        _boneUpdateCounter++;
+        if (_boneUpdateCounter >= 2) // Update every 2nd frame
+        {
+            _boneUpdateCounter = 0;
+            return UpdateBonePositions(gameProcess!);
+        }
+
+        return true;
     }
 
     private bool UpdateBonePositions(GameProcess gameProcess)

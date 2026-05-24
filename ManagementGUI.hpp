@@ -282,16 +282,30 @@ private:
 
     void RenderActiveFeatures() {
         // Visual indicators for active features in-game
+        // Optimization: Only render if we're in-game (simplified check)
+        static float lastActiveCheck = 0;
+        static std::vector<std::string> activeFeatureNames;
+
+        if (ImGui::GetTime() - lastActiveCheck > 0.5f) {
+            activeFeatureNames.clear();
+            for (auto& feature : FeatureRegistry::Get().GetFeatures()) {
+                if (feature->m_enabled) {
+                    activeFeatureNames.push_back(feature->m_displayName);
+                }
+            }
+            lastActiveCheck = ImGui::GetTime();
+        }
+
+        if (activeFeatureNames.empty()) return;
+
         ImGui::SetNextWindowPos(ImVec2(10, 10));
         ImGui::Begin("##ActiveFeatures", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav);
 
         ImGui::TextColored(ImVec4(0.35f, 0.65f, 1.0f, 1.0f), "CS2 INTERNAL");
         ImGui::Separator();
 
-        for (auto& feature : FeatureRegistry::Get().GetFeatures()) {
-            if (feature->m_enabled) {
-                ImGui::Text("%s", feature->m_displayName.c_str());
-            }
+        for (auto& name : activeFeatureNames) {
+            ImGui::Text("%s", name.c_str());
         }
         ImGui::End();
     }

@@ -1,4 +1,4 @@
-﻿using CS2GameHelper.Data.Entity;
+using CS2GameHelper.Data.Entity;
 using CS2GameHelper.Utils;
 
 namespace CS2GameHelper.Data.Game;
@@ -42,8 +42,12 @@ public class GameData : ThreadedServiceBase
         if (Player != null) Player.Update(GameProcess);
 
         if (Entities != null)
-            foreach (var entity in Entities)
-                entity.Update(GameProcess);
+        {
+            for (int i = 0; i < Entities.Length; i++)
+            {
+                Entities[i].Update(GameProcess);
+            }
+        }
     }
 
     #endregion

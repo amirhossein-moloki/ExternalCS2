@@ -50,6 +50,10 @@ public static class SkeletonEsp
         {
             if (!IsValidEntity(entity, player)) continue;
 
+            // Distance culling for skeletons - very expensive to draw
+            float distance = Vector3.Distance(player.Position, entity.Position) * 0.0254f;
+            if (distance > 800) continue;
+
             var color = GetTeamColor(entity.Team);
             DrawSkeleton(graphics, entity, color);
         }
