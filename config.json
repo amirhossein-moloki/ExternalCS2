@@ -1,26 +1,29 @@
 {
   "aimBot": true,
-  "aimBotAutoShoot": true,
+  "aimBotAutoShoot": false,
   "bombTimer": true,
-  "skeletonEsp": false,
+  "skeletonEsp": true,
+  "skeletonShowHeadCircle": true,
   "triggerBot": true,
   "aimBotKey": 1,
   "triggerBotKey": 164,
-  "menuToggleKey": 45,
+  "menuToggleKey": 112,
   "teamCheck": true,
   "esp": {
     "box": {
       "enabled": true,
+      "showBox": true,
       "showName": true,
       "showHealthBar": true,
       "showHealthText": true,
+      "healthPosition": 0,
       "showDistance": true,
       "showWeaponIcon": true,
       "showArmor": true,
       "showVisibilityIndicator": true,
       "showFlags": true,
-      "enemyColor": "FF8B0000",
-      "teamColor": "FF00008B",
+      "enemyColor": "FFFF0000",
+      "teamColor": "FF0000FF",
       "visibleAlpha": "FF",
       "invisibleAlpha": "88"
     },
@@ -39,10 +42,21 @@
     },
     "aimCrosshair": {
       "enabled": true,
-      "radius": 6,
+      "radius": 4,
       "color": "FFFFFFFF",
-      "recoilScale": 2.0
+      "recoilScale": 2.0,
+      "showFovCircle": true,
+      "fovCircleRadius": 100,
+      "fovCircleColor": "40FFFFFF"
     }
+  },
+  "voteTeller": {
+    "enabled": true,
+    "colorT": "FFFF8C00",
+    "colorCt": "FF00BFFF",
+    "colorAll": "FFFFFFFF",
+    "x": 10,
+    "y": 350
   },
   "spectatorList": {
     "enabled": true
@@ -57,5 +71,16 @@
     "headshotSoundFile": "assets/sounds/headshot.wav",
     "headshotDamageThreshold": 100,
     "textDurationSeconds": 1.5
+  },
+  "aimBotTuning": {
+    "humanReactThreshold": 30.0,
+    "humanEaseDistancePixels": 35.0,
+    "humanMinimumGain": 0.15,
+    "lockJitterStartMs": 600,
+    "lockJitterStrongMs": 1500,
+    "minShootIntervalMs": 100,
+    "aimSmoothing": 4.5,
+    "aimUpdateIntervalMs": 500,
+    "humanizationSeed": 0
   }
 }

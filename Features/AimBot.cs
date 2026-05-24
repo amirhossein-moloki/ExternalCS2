@@ -115,7 +115,8 @@ namespace CS2GameHelper.Features
         private static bool TryMouseMoveNew(Point aimPixels)
         {
             if (aimPixels.X == 0 && aimPixels.Y == 0) return false;
-            if (Math.Abs(aimPixels.X) > 100 || Math.Abs(aimPixels.Y) > 100) return false;
+            // Increase max movement slightly if needed, but 100 is usually enough for legit bot
+            if (Math.Abs(aimPixels.X) > 200 || Math.Abs(aimPixels.Y) > 200) return false;
             Utility.WindMouseMove(aimPixels.X, aimPixels.Y, G_0: 9.0, W_0: 3.0, M_0: 15.0, D_0: 12.0);
             return true;
         }

@@ -39,6 +39,7 @@ public class ModernGraphics : ThreadedServiceBase
     private readonly ConfigManager _config;
     private bool _overlayVisible = true;
     private bool _lastF11 = false;
+    private bool _lastF2 = false;
     private DateTime _autoHideUntil = DateTime.MinValue;
     private OverlayMenu? _overlayMenu;
 
@@ -498,6 +499,13 @@ public class ModernGraphics : ThreadedServiceBase
         
         // Обновляем меню
         _overlayMenu?.Update();
+
+        var f2Down = _inputHandler.IsKeyDown(Keys.F2);
+        if (f2Down && !_lastF2)
+        {
+            _overlayMenu?.Toggle();
+        }
+        _lastF2 = f2Down;
 
         var altDown = _inputHandler.IsKeyDown(Keys.Menu);
         var zDown = _inputHandler.IsKeyDown(Keys.Z);

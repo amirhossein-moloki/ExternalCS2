@@ -68,7 +68,7 @@ public class Entity : EntityBase
         _dormant = gameProcess.Process != null && gameProcess.Read<bool>(AddressBase + Offsets.m_bDormant);
         if (_dormant) return true; // Early exit if dormant
 
-        IsSpotted = gameProcess.Process != null && gameProcess.Read<bool>(AddressBase + Offsets.m_entitySpottedState + 0x8);
+        IsSpotted = gameProcess.Process != null && gameProcess.Read<bool>(AddressBase + Offsets.m_entitySpottedState + Offsets.m_bSpotted);
         IsInScope = gameProcess.Process != null ? gameProcess.Read<int>(AddressBase + Offsets.m_bIsScoped) : 0;
         FlashAlpha = gameProcess.Process != null ? gameProcess.Read<int>(AddressBase + Offsets.m_flFlashDuration) : 0;
         Name = gameProcess.Process != null

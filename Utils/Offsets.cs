@@ -55,6 +55,7 @@ public abstract class Offsets
     public static int m_ArmorValue;
     public static int m_bHasHelmet;
     public static int m_bSpotted;
+    public static int m_bSpottedByMask;
     public static int m_bInReload;
     public static int m_angEyeAngles;
     public static int m_CBodyComponent;
@@ -162,7 +163,7 @@ public abstract class Offsets
         // === Глобальные смещения ===
         destData.dwBuildNumber = GetInt(engine2Elem, "dwBuildNumber");
         destData.dwNetworkGameClient = GetInt(engine2Elem, "dwNetworkGameClient");
-        destData.dwNetworkGameClient_serverTickCount = GetInt(engine2Elem, "dwNetworkGameClient_deltaTick");
+        destData.dwNetworkGameClient_serverTickCount = GetInt(engine2Elem, "dwNetworkGameClient_serverTickCount");
         destData.dwWindowHeight = GetInt(engine2Elem, "dwWindowHeight");
         destData.dwWindowWidth = GetInt(engine2Elem, "dwWindowWidth");
         destData.dwLocalPlayerController = GetInt(clientDllElem, "dwLocalPlayerController");
@@ -178,14 +179,15 @@ public abstract class Offsets
         destData.m_fFlags = GetField(classes, "C_BaseEntity", "m_fFlags");
         destData.m_vOldOrigin = GetField(classes, "C_BasePlayerPawn", "m_vOldOrigin");
         destData.m_vecViewOffset = GetField(classes, "C_BaseModelEntity", "m_vecViewOffset");
-        destData.m_aimPunchAngle = GetField(classes, "C_CSPlayerPawn", "m_aimPunchAngle");
+        destData.m_aimPunchAngle = GetField(classes, "CCSPlayer_AimPunchServices", "m_aimPunchAngle");
         destData.m_modelState = GetField(classes, "CSkeletonInstance", "m_modelState");
         destData.m_pGameSceneNode = GetField(classes, "C_BaseEntity", "m_pGameSceneNode");
-        destData.m_iIDEntIndex = GetField(classes, "C_CSPlayerPawn", "m_iIDEntIndex");
+        destData.m_iIDEntIndex = GetField(classes, "C_CSPlayerPawnBase", "m_iIDEntIndex");
         destData.m_lifeState = GetField(classes, "C_BaseEntity", "m_lifeState");
         destData.m_iHealth = GetField(classes, "C_BaseEntity", "m_iHealth");
         destData.m_iTeamNum = GetField(classes, "C_BaseEntity", "m_iTeamNum");
         destData.m_bDormant = GetField(classes, "CGameSceneNode", "m_bDormant");
+        destData.m_bSpottedByMask = GetField(classes, "EntitySpottedState_t", "m_bSpottedByMask");
         destData.m_iShotsFired = GetField(classes, "C_CSPlayerPawn", "m_iShotsFired");
         destData.m_hPawn = GetField(classes, "CBasePlayerController", "m_hPawn");
         destData.m_hObserverTarget = GetField(classes, "CPlayer_ObserverServices", "m_hObserverTarget");
@@ -292,6 +294,7 @@ public abstract class Offsets
         m_ArmorValue = data.m_ArmorValue;
         m_bHasHelmet = data.m_bHasHelmet;
         m_bSpotted = data.m_bSpotted;
+        m_bSpottedByMask = data.m_bSpottedByMask;
         m_angEyeAngles = data.m_angEyeAngles;
         m_CBodyComponent = data.m_CBodyComponent;
         m_bGameRestart = data.m_bGameRestart;
