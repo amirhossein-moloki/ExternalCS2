@@ -5971,6 +5971,7 @@
           "m_fBBoxVisFlags": 1384,
           "m_fEffects": 1332,
           "m_fFlags": 1024,
+          "m_iIDEntIndex": 16044,
           "m_flActualGravityScale": 1388,
           "m_flAnimTime": 956,
           "m_flCreateTime": 1000,

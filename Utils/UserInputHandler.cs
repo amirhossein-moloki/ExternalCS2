@@ -62,15 +62,19 @@ namespace CS2GameHelper.Utils
 
                     case MouseMessages.WmLButtonDown:
                         IsLeftMouseDown = true;
+                        _pressedKeys.Add(Keys.LButton);
                         break;
                     case MouseMessages.WmLButtonUp:
                         IsLeftMouseDown = false;
+                        _pressedKeys.Remove(Keys.LButton);
                         break;
                     case MouseMessages.WmRButtonDown:
                         IsRightMouseDown = true;
+                        _pressedKeys.Add(Keys.RButton);
                         break;
                     case MouseMessages.WmRButtonUp:
                         IsRightMouseDown = false;
+                        _pressedKeys.Remove(Keys.RButton);
                         break;
                 }
             }

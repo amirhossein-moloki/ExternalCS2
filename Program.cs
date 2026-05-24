@@ -40,13 +40,13 @@ public sealed class Program : IDisposable
         _graphics = new ModernGraphics(_gameProcess, _gameData, _inputHandler, _config);
         _graphics.Start();
 
-        _triggerBot = new TriggerBot(_gameProcess, _gameData, _inputHandler);
+        _triggerBot = new TriggerBot(_gameProcess, _gameData, _inputHandler, _config);
         if (_config.TriggerBot)
         {
             _triggerBot.Start();
         }
 
-        _aimBot = new AimBot(_gameProcess, _gameData, _inputHandler); // ← передаём inputHandler
+        _aimBot = new AimBot(_gameProcess, _gameData, _inputHandler, _config); // ← передаём inputHandler
         if (_config.AimBot)
         {
             _aimBot.Start();
@@ -122,7 +122,7 @@ public sealed class Program : IDisposable
         consoleThread.Start();
 
         // Main application loop — блокируемся на токене вместо busy-wait sleep
-        runCts.Token.WaitHandle.WaitOne();
+        while (!runCts.IsCancellationRequested) { if (User32.PeekMessage(out var msg, IntPtr.Zero, 0, 0, 1)) { User32.TranslateMessage(ref msg); User32.DispatchMessage(ref msg); } else { Thread.Sleep(1); } }
 
         // Аккуратно дожидаемся завершения консольного потока.
         consoleThread.Join(TimeSpan.FromSeconds(1));

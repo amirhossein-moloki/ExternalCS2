@@ -22,16 +22,16 @@ public sealed class TriggerBot : ThreadedServiceBase
     private readonly GameProcess _gameProcess;
     private readonly GameData _gameData;
     private readonly UserInputHandler _inputHandler;
-    private readonly Keys _triggerBotHotKey;
+    private readonly ConfigManager _config;
 
     private DateTime _lastShot = DateTime.MinValue;
 
-    public TriggerBot(GameProcess gameProcess, GameData gameData, UserInputHandler inputHandler)
+    public TriggerBot(GameProcess gameProcess, GameData gameData, UserInputHandler inputHandler, ConfigManager config)
     {
         _gameProcess = gameProcess ?? throw new ArgumentNullException(nameof(gameProcess));
         _gameData = gameData ?? throw new ArgumentNullException(nameof(gameData));
         _inputHandler = inputHandler ?? throw new ArgumentNullException(nameof(inputHandler));
-        _triggerBotHotKey = ConfigManager.Load().TriggerBotKey;
+        _config = config ?? throw new ArgumentNullException(nameof(config));
     }
 
     protected override string ThreadName => nameof(TriggerBot);
@@ -130,7 +130,7 @@ public sealed class TriggerBot : ThreadedServiceBase
         return angle <= GraphicsMath.DegreeToRadian(TriggerFovDegrees);
     }
 
-    private bool IsHotKeyDown() => _inputHandler.IsKeyDown(_triggerBotHotKey);
+    private bool IsHotKeyDown() => _inputHandler.IsKeyDown(_config.TriggerBotKey);
 
     private void ExecuteTrigger()
     {
