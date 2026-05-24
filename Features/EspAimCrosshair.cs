@@ -28,13 +28,12 @@ public static class EspAimCrosshair
         return player.MatrixViewport.Transform(_pointClip);
     }
 
-    public static void Draw(ModernGraphics graphics)
+    public static void Draw(ModernGraphics graphics, ConfigManager cfg)
     {
         var player = graphics.GameData.Player;
         if (player == null)
             return;
 
-        var cfg = ConfigManager.Load();
         var aimCfg = cfg?.Esp?.AimCrosshair ?? new ConfigManager.EspConfig.AimCrosshairConfig();
         if (!aimCfg.Enabled)
             return;

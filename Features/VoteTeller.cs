@@ -118,11 +118,10 @@ internal class VoteTeller : ThreadedServiceBase
         _activeIssue = 0;
     }
 
-    public static void Draw(ModernGraphics graphics)
+    public static void Draw(ModernGraphics graphics, ConfigManager cfg)
     {
         if (!_isVoting) return;
 
-        var cfg = ConfigManager.Load();
         var vc = cfg?.VoteTeller ?? new ConfigManager.VoteTellerConfig();
         if (!vc.Enabled) return;
 

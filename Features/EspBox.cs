@@ -89,12 +89,9 @@ public static class EspBox
         graphics.DrawText(text, textX, y, color, fontSize, useCustomFont);
     }
 
-    public static void Draw(ModernGraphics graphics)
+    public static void Draw(ModernGraphics graphics, ConfigManager fullConfig)
     {
-
-        var fullConfig = ConfigManager.Load();
         var espConfig = fullConfig.Esp.Box;
-
         if (!espConfig.Enabled) return;
 
         var player = graphics.GameData.Player;
@@ -105,6 +102,9 @@ public static class EspBox
         {
             if (!entity.IsAlive() || entity.AddressBase == player.AddressBase) continue;
             if (fullConfig.TeamCheck && entity.Team == player.Team) continue;
+
+            float distance = Vector3.Distance(player.Position, entity.Position) * UnitsToMeters;
+            if (distance > 1500) continue; // Distance Culling
 
             var bbox = GetEntityBoundingBox(player, entity);
             if (bbox == null) continue;
@@ -122,6 +122,9 @@ public static class EspBox
     {
         var (topLeft, bottomRight) = bbox;
         if (topLeft.X >= bottomRight.X || topLeft.Y >= bottomRight.Y) return;
+
+        float distance = Vector3.Distance(localPlayer.Position, entity.Position) * UnitsToMeters;
+        bool isClose = distance < 800;
 
         // === Цвет с учётом видимости и команды ===
         bool isVisible = entity.IsVisible;
@@ -144,6 +147,9 @@ public static class EspBox
         float textY = topLeft.Y - 16;
         float centerX = (topLeft.X + bottomRight.X) / 2f;
 
+        // LOD: Only draw detailed info for close entities
+        if (!isClose) return;
+
         // === Имя ===
         if (config.ShowName)
         {
@@ -165,7 +171,6 @@ public static class EspBox
         // === Дистанция ===
         if (config.ShowDistance)
         {
-            float distance = Vector3.Distance(localPlayer.Position, entity.Position) * UnitsToMeters;
             string distText = $"{distance:0}m";
             DrawCenteredText(graphics, distText, centerX, textY, EspColor.White);
             textY += 14;
@@ -280,34 +285,26 @@ public static class EspBox
 
     private static (Vector2, Vector2)? GetEntityBoundingBox(Player player, Entity entity)
     {
-        const float BasePadding = 5.0f;
-        var minPos = new Vector2(float.MaxValue, float.MaxValue);
-        var maxPos = new Vector2(float.MinValue, float.MinValue);
-
         var matrix = player.MatrixViewProjectionViewport;
-        if (entity.BonePos == null || entity.BonePos.Count == 0)
+        if (entity.BonePos == null || !entity.BonePos.TryGetValue("head", out var headPos))
             return null;
 
-        bool anyValid = false;
-        foreach (var bone in entity.BonePos.Values)
-        {
-            var projected = matrix.Transform(bone);
-            if (projected.Z >= 1 || projected.X < 0 || projected.Y < 0)
-                continue;
+        var origin = entity.Position;
+        var head = headPos + new Vector3(0, 0, 10); // Add slight padding above head
+        var bottom = origin - new Vector3(0, 0, 5); // Add slight padding below feet
 
-            anyValid = true;
-            minPos.X = Math.Min(minPos.X, projected.X);
-            minPos.Y = Math.Min(minPos.Y, projected.Y);
-            maxPos.X = Math.Max(maxPos.X, projected.X);
-            maxPos.Y = Math.Max(maxPos.Y, projected.Y);
-        }
+        var headProj = matrix.Transform(head);
+        var bottomProj = matrix.Transform(bottom);
 
-        if (!anyValid)
+        if (headProj.Z >= 1 || bottomProj.Z >= 1)
             return null;
 
-        var sizeMultiplier = 2f - (entity.Health / 100f);
-        var padding = new Vector2(BasePadding * sizeMultiplier);
+        float height = Math.Abs(headProj.Y - bottomProj.Y);
+        float width = height / 2f;
 
-        return (minPos - padding, maxPos + padding);
+        var topLeft = new Vector2(headProj.X - width / 2f, headProj.Y);
+        var bottomRight = new Vector2(headProj.X + width / 2f, bottomProj.Y);
+
+        return (topLeft, bottomRight);
     }
 }

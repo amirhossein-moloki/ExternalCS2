@@ -424,16 +424,22 @@ public class ModernGraphics : ThreadedServiceBase
         }
     }
 
+    private int _styleUpdateCounter = 0;
+    private int _windowPosUpdateCounter = 0;
+
     // === ОСНОВНОЙ ЦИКЛ ===
     protected override void FrameAction()
     {
         EnsureInitialized();
         _window?.DoEvents();
 
-        // Re-apply layered/transparent styles each frame to avoid state changes
-        // when the window is clicked or activated by the user (this can cause
-        // the layered/transparent flags to be lost on some Windows setups).
-        try { ApplyWindowStyles(); } catch { }
+        // Throttled style application (every 10 frames)
+        _styleUpdateCounter++;
+        if (_styleUpdateCounter >= 10)
+        {
+            try { ApplyWindowStyles(); } catch { }
+            _styleUpdateCounter = 0;
+        }
 
         // If GL or Skia surface was lost (black screen after activation/click),
         // try to recreate it using the current framebuffer binding.
@@ -452,7 +458,15 @@ public class ModernGraphics : ThreadedServiceBase
         }
 
         if (_gameProcess.HasWindow)
-            UpdateWindowPosition();
+        {
+            // Throttled window position update (every 2 frames)
+            _windowPosUpdateCounter++;
+            if (_windowPosUpdateCounter >= 2)
+            {
+                UpdateWindowPosition();
+                _windowPosUpdateCounter = 0;
+            }
+        }
 
         // Используем ЕДИНЫЙ UserInputHandler
         var f11Down = _inputHandler.IsKeyDown(Keys.F11);
@@ -526,19 +540,19 @@ public class ModernGraphics : ThreadedServiceBase
 
             if (isValid)
             {
-                if (config.Esp.Box.Enabled) EspBox.Draw(this);
-                if (config.Esp.Radar.Enabled) Radar.Draw(this);
+                if (config.Esp.Box.Enabled) EspBox.Draw(this, config);
+                if (config.Esp.Radar.Enabled) Radar.Draw(this, config);
                 if (config.Esp?.AimCrosshair?.Enabled == true)
                 {
-                    EspAimCrosshair.Draw(this);
+                    EspAimCrosshair.Draw(this, config);
                 }
                 if (config.SkeletonEsp) SkeletonEsp.Draw(this);
                 if (config.BombTimer) BombTimer.Draw(this);
-                if (config.VoteTeller?.Enabled == true) VoteTeller.Draw(this);
-                if (config.SpectatorList.Enabled) SpectatorList.Draw(this);
+                if (config.VoteTeller?.Enabled == true) VoteTeller.Draw(this, config);
+                if (config.SpectatorList.Enabled) SpectatorList.Draw(this, config);
                 if (config.HitSound.Enabled)
                 {
-                    HitSound.Process(this);
+                    HitSound.Process(this, config);
                     HitSound.DrawHitTexts(this);
                 }
             }

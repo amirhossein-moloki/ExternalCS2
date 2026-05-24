@@ -19,9 +19,8 @@ public static class Radar
                color.Blue;
     }
 
-    public static void Draw(ModernGraphics graphics)
+    public static void Draw(ModernGraphics graphics, ConfigManager config)
     {
-        var config = ConfigManager.Load();
         var radarCfg = config.Esp.Radar;
         if (!radarCfg.Enabled) return;
 

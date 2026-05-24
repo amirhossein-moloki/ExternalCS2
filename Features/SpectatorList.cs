@@ -14,9 +14,8 @@ namespace CS2GameHelper.Features;
 /// </summary>
 public static class SpectatorList
 {
-    public static void Draw(ModernGraphics graphics)
+    public static void Draw(ModernGraphics graphics, ConfigManager config)
     {
-        var config = ConfigManager.Load();
         if (!config.SpectatorList.Enabled) return;
 
         var player = graphics.GameData.Player;

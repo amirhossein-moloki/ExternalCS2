@@ -57,7 +57,7 @@ public static class HitSound
     private static readonly List<HitText> _hitTexts = new();
     private static readonly object _textLock = new();
 
-    public static void Process(ModernGraphics graphics)
+    public static void Process(ModernGraphics graphics, ConfigManager cfg)
     {
         var gameProcess = graphics.GameProcess;
         var player = graphics.GameData.Player;
@@ -82,7 +82,6 @@ public static class HitSound
         if (currentDamage > _lastDamage)
         {
             var delta = currentDamage - _lastDamage;
-            var cfg = ConfigManager.Load();
             var hsCfg = cfg.HitSound ?? new ConfigManager.HitSoundConfig();
 
             if (!hsCfg.Enabled) return;
