@@ -54,7 +54,7 @@ public sealed class Program : IDisposable
             _aimBot.Start();
         }
 
-        _rcs = new Rcs(_gameProcess, _gameData, _config);
+        _rcs = new Rcs(_gameProcess, _gameData, _config, _aimBot);
         if (_config.Rcs.Enabled)
         {
             _rcs.Start();
