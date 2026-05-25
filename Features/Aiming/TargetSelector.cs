@@ -47,12 +47,15 @@ namespace CS2GameHelper.Features.Aiming
                 // Prediction based on travel time + approx latency
                 float predictionTime = 0.015f + (distanceToTarget / 20000f);
 
+                Vector3? bestBonePos = null;
+                float bestBoneScore = float.MaxValue;
+                Vector2 bestBoneAngles = Vector2.Zero;
+
                 foreach (var bone in AimBonePriority)
                 {
                     if (!entity.BonePos.TryGetValue(bone, out var bonePos)) continue;
 
                     Vector3 predictedPos = bonePos + relativeVelocity * predictionTime;
-
                     var dirToTarget = (predictedPos - playerPos).GetNormalized();
                     float angleFromCrosshair = playerLookDir.GetAngleTo(dirToTarget);
 
@@ -64,19 +67,35 @@ namespace CS2GameHelper.Features.Aiming
 
                     if (effectiveAngle > customFov) continue;
 
-                    // Priority weight: "head" gets the lowest multiplier (best score)
-                    float priorityWeight = bone == "head" ? 0.5f : 1.0f;
-                    if (bone == "neck_0") priorityWeight = 0.8f;
-
-                    // Score: smaller angle is much better than closer distance
-                    float score = (float)((effectiveAngle * 100.0 + distanceToTarget / 1000.0) * priorityWeight);
-
-                    if (score < minScore)
+                    // Priority weight: strict hierarchy. Head is much better than others.
+                    float priorityWeight = bone switch
                     {
-                        minScore = score;
-                        AimingMath.GetAimAngles(gameData.Player, predictedPos, 0f, out _, out bestAimAngles);
+                        "head" => 0.1f,
+                        "neck_0" => 0.5f,
+                        "spine_1" => 0.9f,
+                        _ => 1.0f
+                    };
 
-                        bestAimPosition = predictedPos;
+                    float boneScore = (float)(effectiveAngle * 100.0 * priorityWeight);
+
+                    if (boneScore < bestBoneScore)
+                    {
+                        bestBoneScore = boneScore;
+                        bestBonePos = predictedPos;
+                        AimingMath.GetAimAngles(gameData.Player, predictedPos, 0f, out _, out bestBoneAngles);
+                    }
+                }
+
+                if (bestBonePos.HasValue)
+                {
+                    // Overall entity score depends on distance and how good its best bone is
+                    float entityScore = (float)(bestBoneScore + distanceToTarget / 500.0);
+
+                    if (entityScore < minScore)
+                    {
+                        minScore = entityScore;
+                        bestAimAngles = bestBoneAngles;
+                        bestAimPosition = bestBonePos.Value;
                         bestDistance = distanceToTarget;
                         bestTargetId = entity.Id;
                         bestTargetVelocity = targetVelocity;

@@ -106,8 +106,8 @@ Maps to `ConfigManager.Esp`.
 | `humanReactThreshold` | double | `ConfigManager.AimBotTuning.HumanReactThreshold` | `30.0` | Suppression threshold for manual mouse movement. |
 | `humanEaseDistancePixels` | double | `ConfigManager.AimBotTuning.HumanEaseDistancePixels` | `35.0` | Pixel distance for easing start. |
 | `humanMinimumGain` | double | `ConfigManager.AimBotTuning.HumanMinimumGain` | `0.15` | Minimum movement gain for humanization. |
-| `aimSmoothing` | double | `ConfigManager.AimBotTuning.AimSmoothing` | `3.0` | AimBot movement smoothing factor. |
-| `recoilScale` | float | `ConfigManager.AimBotTuning.RecoilScale` | `2.0` | Legacy/Global recoil compensation multiplier. |
+| `aimSmoothing` | double | `ConfigManager.AimBotTuning.AimSmoothing` | `1.5` | AimBot movement smoothing factor. |
+| `useAiCorrections` | bool | `ConfigManager.AimBotTuning.UseAiCorrections` | `false` | Enable/Disable AI/Neural network based corrections. |
 
 ---
 
