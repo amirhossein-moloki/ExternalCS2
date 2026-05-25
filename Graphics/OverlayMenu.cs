@@ -72,7 +72,9 @@ namespace CS2GameHelper.Graphics
                 new ToggleMenuItem("Enabled", () => _config.AimBot, v => { _config.AimBot = v; }, "Core"),
                 new KeybindMenuItem("Aim Key", () => _config.AimBotKey, v => { _config.AimBotKey = v; }, "Core"),
                 new ToggleMenuItem("Auto Shoot", () => _config.AimBotAutoShoot, v => { _config.AimBotAutoShoot = v; }, "Settings"),
-                new ToggleMenuItem("Team Check", () => _config.TeamCheck, v => { _config.TeamCheck = v; }, "Settings")
+                new ToggleMenuItem("Team Check", () => _config.TeamCheck, v => { _config.TeamCheck = v; }, "Settings"),
+                new ToggleMenuItem("Standalone RCS", () => _config.StandaloneRcs, v => { _config.StandaloneRcs = v; }, "RCS"),
+                new SliderMenuItem("Recoil Scale", () => _config.AimBotTuning.RecoilScale, v => { _config.AimBotTuning.RecoilScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "RCS")
             }));
 
             _categories.Add(new MenuCategory("TriggerBot", new List<MenuItem>

@@ -19,6 +19,7 @@ public class ConfigManager
     public Keys MenuToggleKey { get; set; } = Keys.Insert;
     public bool TeamCheck { get; set; } = true;
     public bool AimBotAutoShoot { get; set; } = true;
+    public bool StandaloneRcs { get; set; } = true;
 
     // Вложенные настройки ESP
     public EspConfig Esp { get; set; } = new();
@@ -123,6 +124,8 @@ public class ConfigManager
         public int AimUpdateIntervalMs { get; set; } = 500;
         // 0 → случайный seed (недетерминированный). Другое → воспроизводимый джиттер.
         public int HumanizationSeed { get; set; } = 0;
+        public float RecoilScale { get; set; } = 2.0f;
+        public Dictionary<string, float> WeaponRcsScales { get; set; } = new();
     }
 
     public class HitSoundConfig
@@ -226,6 +229,7 @@ public class ConfigManager
     {
         AimBot = other.AimBot;
         AimBotAutoShoot = other.AimBotAutoShoot;
+        StandaloneRcs = other.StandaloneRcs;
         BombTimer = other.BombTimer;
         SkeletonEsp = other.SkeletonEsp;
         SkeletonShowHeadCircle = other.SkeletonShowHeadCircle;
@@ -311,6 +315,10 @@ public class ConfigManager
         AimBotTuning.AimSmoothing = other.AimBotTuning.AimSmoothing;
         AimBotTuning.AimUpdateIntervalMs = other.AimBotTuning.AimUpdateIntervalMs;
         AimBotTuning.HumanizationSeed = other.AimBotTuning.HumanizationSeed;
+        AimBotTuning.RecoilScale = other.AimBotTuning.RecoilScale;
+        AimBotTuning.WeaponRcsScales = other.AimBotTuning.WeaponRcsScales != null
+            ? new Dictionary<string, float>(other.AimBotTuning.WeaponRcsScales)
+            : new Dictionary<string, float>();
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -358,6 +366,7 @@ public class ConfigManager
             // Основные флаги
             AimBot = true,
             AimBotAutoShoot = true,
+            StandaloneRcs = true,
             BombTimer = true,
             // УДАЛЕНО: EspAimCrosshair = true,
             SkeletonEsp = true,
@@ -426,7 +435,19 @@ public class ConfigManager
                 HeadshotDamageThreshold = 100,
                 TextDurationSeconds = 1.5
             },
-            AimBotTuning = new AimBotTuningConfig()
+            AimBotTuning = new AimBotTuningConfig
+            {
+                RecoilScale = 2.0f,
+                WeaponRcsScales = new Dictionary<string, float>
+                {
+                    { "Ak47", 2.0f },
+                    { "M4A1", 2.0f },
+                    { "M4A1Silencer", 2.0f },
+                    { "Deagle", 1.0f },
+                    { "Glock", 1.5f },
+                    { "UspSilencer", 1.2f }
+                }
+            }
         };
     }
 }

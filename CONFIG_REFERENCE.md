@@ -25,6 +25,7 @@
 | `aimBotKey` | int | `ConfigManager.AimBotKey` | `1` (`Keys.LButton`) | Hotkey for manual AimBot activation. |
 | `triggerBotKey` | int | `ConfigManager.TriggerBotKey` | `164` (`Keys.LMenu`) | Hotkey for TriggerBot. |
 | `teamCheck` | bool | `ConfigManager.TeamCheck` | `true` | Ignore teammates in AimBot/TriggerBot/ESP. |
+| `standaloneRcs` | bool | `ConfigManager.StandaloneRcs` | `true` | Enable recoil compensation even without a target (No Recoil). |
 
 ---
 
@@ -96,6 +97,19 @@ Maps to `ConfigManager.Esp`.
 | `headshotSoundFile` | string | `ConfigManager.HitSound.HeadshotSoundFile` | `"assets/sounds/headshot.wav"` | Path to headshot sound file. |
 | `headshotDamageThreshold` | int | `ConfigManager.HitSound.HeadshotDamageThreshold` | `100` | Damage ≥ this value triggers "HEADSHOT". |
 | `textDurationSeconds` | double | `ConfigManager.HitSound.TextDurationSeconds` | `1.5` | Duration (seconds) for on-screen hit text. |
+
+---
+
+## AimBot Tuning (`aimBotTuning`)
+
+| Field | Type | C# Property | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `humanReactThreshold` | double | `ConfigManager.AimBotTuning.HumanReactThreshold` | `30.0` | Suppression threshold for manual mouse movement. |
+| `humanEaseDistancePixels` | double | `ConfigManager.AimBotTuning.HumanEaseDistancePixels` | `35.0` | Pixel distance for easing start. |
+| `humanMinimumGain` | double | `ConfigManager.AimBotTuning.HumanMinimumGain` | `0.15` | Minimum movement gain for humanization. |
+| `aimSmoothing` | double | `ConfigManager.AimBotTuning.AimSmoothing` | `3.0` | AimBot movement smoothing factor. |
+| `recoilScale` | float | `ConfigManager.AimBotTuning.RecoilScale` | `2.0` | Global recoil compensation multiplier. |
+| `weaponRcsScales` | object | `ConfigManager.AimBotTuning.WeaponRcsScales` | `{}` | Per-weapon RCS scale overrides (e.g. `"Ak47": 2.0`). |
 
 ---
 

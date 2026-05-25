@@ -68,6 +68,7 @@ namespace CS2GameHelper.Features
         private Vector3 _lastTargetVelocity = Vector3.Zero;
         private int _lastTargetIdForAccel = -1;
         private int _aimBotLastDamage;
+        private Vector3 _lastAimPunch = Vector3.Zero;
 
         public AimBot(GameProcess gameProcess, GameData gameData, UserInputHandler inputHandler, ConfigManager config)
         {
@@ -125,12 +126,17 @@ namespace CS2GameHelper.Features
         {
             bool isManualMode = IsHotKeyDown();
             bool isAutoMode = _config.AimBotAutoShoot;
+            bool isStandaloneRcs = _config.StandaloneRcs;
 
-            if (!isManualMode && !isAutoMode) return;
+            if (!isManualMode && !isAutoMode && !isStandaloneRcs) return;
 
             try
             {
-                if (GameProcess == null || !GameProcess.IsValid || GameData?.Player == null || !GameData.Player.IsAlive())
+                if (GameProcess == null || !GameProcess.IsValid || GameData?.Player == null)
+                    return;
+
+                var player = GameData.Player;
+                if (!player.IsAlive())
                     return;
 
                 var userMoveLen = Math.Sqrt(_inputHandler.LastMouseDelta.X * (double)_inputHandler.LastMouseDelta.X + _inputHandler.LastMouseDelta.Y * (double)_inputHandler.LastMouseDelta.Y);
@@ -208,15 +214,22 @@ namespace CS2GameHelper.Features
                     _lastTargetVelocity = Vector3.Zero;
                 }
 
+                float currentRecoilScale = _config.AimBotTuning.RecoilScale;
+                if (player.CurrentWeaponName != null &&
+                    _config.AimBotTuning.WeaponRcsScales.TryGetValue(player.CurrentWeaponName, out var customScale))
+                {
+                    currentRecoilScale = customScale;
+                }
+
                 if (aimResult.Found)
                 {
-                    var angles = aimResult.AimAngles;
+                    AimingMath.GetAimAngles(player, aimResult.TargetPosition, currentRecoilScale, out _, out var angles);
                     AimingMath.GetAimPixels(angles, _anglePerPixelHorizontal, _anglePerPixelVertical, out aimPixels);
 
                     var ctx = new AimContext(
                         aimResult.Distance,
                         aimResult.TargetPosition,
-                        GameData.Player.EyePosition,
+                        player.EyePosition,
                         aimResult.TargetVelocity,
                         deltaTimeMs,
                         aimSpeed,
@@ -248,9 +261,9 @@ namespace CS2GameHelper.Features
 
                 var shouldWait = false;
 
-                if (aimResult.Found && isAutoMode)
+                if (aimResult.Found && (isManualMode || isAutoMode))
                 {
-                    if ((DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
+                    if (isAutoMode && (DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
                     {
                         Utility.MouseLeftDown();
                         Thread.Sleep(10);
@@ -264,7 +277,7 @@ namespace CS2GameHelper.Features
                     }
                 }
 
-                if (aimPixels.X != 0 || aimPixels.Y != 0)
+                if ((isManualMode || isAutoMode) && (aimPixels.X != 0 || aimPixels.Y != 0))
                 {
                     if (Math.Abs(aimPixels.X) > 3 || Math.Abs(aimPixels.Y) > 3)
                     {
@@ -298,13 +311,13 @@ namespace CS2GameHelper.Features
                 if (aimResult.Found) _aimSuccessCount++;
 
                 // === СБОР ОСТАТКОВ БЕЗ SLEEP ===
-                if (aimResult.Found && GameData?.Player != null)
+                if (aimResult.Found)
                 {
                     // 1. Сохраняем НАПРАВЛЕНИЕ ДО движения мыши
-                    var aimDirectionBefore = GameData.Player.AimDirection;
+                    var aimDirectionBefore = player.AimDirection;
 
                     // 2. Вычисляем ЖЕЛАЕМЫЙ вектор взгляда
-                    var desiredDirection = (aimResult.TargetPosition - GameData.Player.EyePosition).GetNormalized();
+                    var desiredDirection = (aimResult.TargetPosition - player.EyePosition).GetNormalized();
 
                     // 3. Вычисляем УГЛОВУЮ ошибку (в радианах)
                     var horizontalError = desiredDirection.GetSignedAngleTo(aimDirectionBefore, new Vector3(0, 0, 1));
@@ -327,7 +340,7 @@ namespace CS2GameHelper.Features
                     var obsCtx = new AimContext(
                         aimResult.Distance,
                         aimResult.TargetPosition,
-                        GameData.Player.EyePosition,
+                        player.EyePosition,
                         aimResult.TargetVelocity,
                         deltaTimeMs,
                         aimSpeed,
@@ -336,6 +349,43 @@ namespace CS2GameHelper.Features
                 }
 
                 // === Детект попадания по дельте урона → ConfirmHit() для обучения ===
+                // === STANDALONE RCS (NO RECOIL) ===
+                // Only run standalone RCS if AimBot is not currently moving the mouse to a target
+                bool isAimingAtTarget = aimResult.Found && (isManualMode || isAutoMode);
+                if (_config.StandaloneRcs && player.ShotsFired > 0 && !isAimingAtTarget)
+                {
+                    var currentPunch = player.AimPunchAngle;
+                    var punchDelta = currentPunch - _lastAimPunch;
+
+                    if (punchDelta.X != 0 || punchDelta.Y != 0)
+                    {
+                        // Convert punch delta to pixels
+                        var deltaYawRad = (float)(punchDelta.Y * (Math.PI / 180.0));
+                        var deltaPitchRad = (float)(punchDelta.X * (Math.PI / 180.0));
+
+                        Point rcsPixels;
+                        AimingMath.GetAimPixels(new Vector2(deltaYawRad, deltaPitchRad), _anglePerPixelHorizontal, _anglePerPixelVertical, out rcsPixels);
+
+                        // We negate because we want to move AGAINST the recoil direction
+                        double finalRcsX = -rcsPixels.X * currentRecoilScale;
+                        double finalRcsY = -rcsPixels.Y * currentRecoilScale;
+
+                        // Humanization: Add slight randomization (95-105%) and rounding fix
+                        double humanScale = 0.95 + (_humanizationRandom.NextDouble() * 0.1);
+                        finalRcsX *= humanScale;
+                        finalRcsY *= humanScale;
+
+                        int moveX = (int)(Math.Abs(finalRcsX) > 0.01 && Math.Abs(finalRcsX) < 1.0 ? Math.Sign(finalRcsX) : Math.Round(finalRcsX));
+                        int moveY = (int)(Math.Abs(finalRcsY) > 0.01 && Math.Abs(finalRcsY) < 1.0 ? Math.Sign(finalRcsY) : Math.Round(finalRcsY));
+
+                        if (moveX != 0 || moveY != 0)
+                        {
+                            Utility.MouseMove(moveX, moveY);
+                        }
+                    }
+                }
+                _lastAimPunch = player.AimPunchAngle;
+
                 TryConfirmHitFromDamage();
 
                 _aimTotalCount++;
