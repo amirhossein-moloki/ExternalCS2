@@ -382,6 +382,48 @@ public static class Utility
 
         User32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>());
     }
+    public static void PressKey(Keys key)
+    {
+        var inputs = new Input[1];
+        inputs[0] = new Input
+        {
+            Type = InputType.Keyboard,
+            Union = new InputUnion
+            {
+                keyboard = new KeyboardInput
+                {
+                    virtualKey = (ushort)key,
+                    scanCode = 0,
+                    flags = 0,
+                    timeStamp = 0,
+                    extraInfo = IntPtr.Zero
+                }
+            }
+        };
+        User32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>());
+    }
+
+    public static void ReleaseKey(Keys key)
+    {
+        var inputs = new Input[1];
+        inputs[0] = new Input
+        {
+            Type = InputType.Keyboard,
+            Union = new InputUnion
+            {
+                keyboard = new KeyboardInput
+                {
+                    virtualKey = (ushort)key,
+                    scanCode = 0,
+                    flags = KeyboardFlags.KeyUp,
+                    timeStamp = 0,
+                    extraInfo = IntPtr.Zero
+                }
+            }
+        };
+        User32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>());
+    }
+
 
 
     [StructLayout(LayoutKind.Sequential)]

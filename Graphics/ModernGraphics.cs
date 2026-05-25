@@ -591,6 +591,24 @@ public class ModernGraphics : ThreadedServiceBase
 
             if (isValid)
             {
+                if (config.FollowRcs.Enabled && player != null)
+                {
+                    float recoilScale = config.Esp.AimCrosshair.RecoilScale;
+                    var punch = player.AimPunchAngle;
+                    var center = new Vector2(_window!.Size.X / 2f, _window!.Size.Y / 2f);
+
+                    // Basic crosshair calibration factor (approximate)
+                    float fovScale = _window!.Size.Y / (2.0f * (float)Math.Tan(90.0f * 0.5f * Math.PI / 180.0f));
+
+                    var rcsPos = center - new Vector2(
+                        punch.Y * recoilScale * fovScale * (2.45f / config.Rcs.Sensitivity) * 0.02f,
+                        punch.X * recoilScale * fovScale * (2.45f / config.Rcs.Sensitivity) * 0.02f
+                    );
+
+                    uint dotColor = uint.Parse(config.FollowRcs.Color, System.Globalization.NumberStyles.HexNumber);
+                    DrawCircleFilled(rcsPos.X, rcsPos.Y, config.FollowRcs.DotSize, dotColor);
+                }
+
                 if (config.Esp.Box.Enabled) EspBox.Draw(this, config);
                 if (config.Esp.Radar.Enabled) Radar.Draw(this, config);
                 if (config.Esp?.AimCrosshair?.Enabled == true)
