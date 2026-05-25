@@ -84,6 +84,13 @@ namespace CS2GameHelper.Graphics
                     v => _config.Rcs.WeaponScales["Ak47"] = (float)v, 0.0, 4.0, 0.1, "0.0", "Weapons")
             }));
 
+            _categories.Add(new MenuCategory("No Recoil", new List<MenuItem>
+            {
+                new ToggleMenuItem("Enabled", () => _config.NoRecoil.Enabled, v => { _config.NoRecoil.Enabled = v; }, "Core"),
+                new SliderMenuItem("Horizontal Scale", () => _config.NoRecoil.HorizontalScale, v => { _config.NoRecoil.HorizontalScale = (float)v; }, 0.0, 2.0, 0.05, "0.00", "Settings"),
+                new SliderMenuItem("Vertical Scale", () => _config.NoRecoil.VerticalScale, v => { _config.NoRecoil.VerticalScale = (float)v; }, 0.0, 2.0, 0.05, "0.00", "Settings")
+            }));
+
             _categories.Add(new MenuCategory("TriggerBot", new List<MenuItem>
             {
                 new ToggleMenuItem("Enabled", () => _config.TriggerBot, v => { _config.TriggerBot = v; }, "Core"),
