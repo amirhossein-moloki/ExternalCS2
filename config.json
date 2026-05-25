@@ -15,7 +15,7 @@
       "showHealthBar": true,
       "showHealthText": true,
       "showDistance": true,
-      "showWeaponIcon": true,
+      "showWeaponName": true,
       "showArmor": true,
       "showVisibilityIndicator": true,
       "showFlags": true,

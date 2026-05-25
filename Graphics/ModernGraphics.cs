@@ -79,7 +79,6 @@ public class ModernGraphics : ThreadedServiceBase
 
     public void SetOverlayVisible(bool visible)
     {
-        // Silk.NET exposes Win32 as a nullable tuple of (nint Hwnd, nint HDC, nint HInstance).
         var nativeWin32 = _window?.Native?.Win32;
         if (!nativeWin32.HasValue) return;
 
@@ -89,6 +88,21 @@ public class ModernGraphics : ThreadedServiceBase
             User32.ShowWindow(hwnd, visible ? 4 : 0);
         }
         catch { /* ignore */ }
+    }
+
+    public void SetInputTransparent(bool transparent)
+    {
+        var nativeWin32 = _window?.Native?.Win32;
+        if (!nativeWin32.HasValue) return;
+        var hwnd = new IntPtr(nativeWin32.Value.Hwnd);
+
+        var exStyle = User32.GetWindowLong(hwnd, GWL_EXSTYLE);
+        if (transparent)
+            exStyle |= WS_EX_TRANSPARENT;
+        else
+            exStyle &= ~WS_EX_TRANSPARENT;
+
+        User32.SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
     }
 
     private void EnsureInitialized()
@@ -506,8 +520,16 @@ public class ModernGraphics : ThreadedServiceBase
         }
         _lastF11 = f11Down;
         
-        // Обновляем меню
-        _overlayMenu?.Update();
+        // Обновляем منو
+        if (_overlayMenu != null)
+        {
+            bool wasVisible = _overlayMenu.IsVisible;
+            _overlayMenu.Update();
+            if (wasVisible != _overlayMenu.IsVisible)
+            {
+                SetInputTransparent(!_overlayMenu.IsVisible);
+            }
+        }
 
         var altDown = _inputHandler.IsKeyDown(Keys.Menu);
         var zDown = _inputHandler.IsKeyDown(Keys.Z);

@@ -39,7 +39,7 @@ public class ConfigManager
             public bool ShowHealthText { get; set; } = true;
             public int HealthPosition { get; set; } = 0; // 0: Left, 1: Top, 2: Right, 3: Bottom
             public bool ShowDistance { get; set; } = true;
-            public bool ShowWeaponIcon { get; set; } = true;
+            public bool ShowWeaponName { get; set; } = true;
             public bool ShowArmor { get; set; } = true;
             public bool ShowVisibilityIndicator { get; set; } = true;
             public bool ShowFlags { get; set; } = true;
@@ -248,7 +248,7 @@ public class ConfigManager
         Esp.Box.ShowHealthText = other.Esp.Box.ShowHealthText;
         Esp.Box.HealthPosition = other.Esp.Box.HealthPosition;
         Esp.Box.ShowDistance = other.Esp.Box.ShowDistance;
-        Esp.Box.ShowWeaponIcon = other.Esp.Box.ShowWeaponIcon;
+        Esp.Box.ShowWeaponName = other.Esp.Box.ShowWeaponName;
         Esp.Box.ShowArmor = other.Esp.Box.ShowArmor;
         Esp.Box.ShowVisibilityIndicator = other.Esp.Box.ShowVisibilityIndicator;
         Esp.Box.ShowFlags = other.Esp.Box.ShowFlags;
@@ -379,7 +379,7 @@ public class ConfigManager
                     ShowHealthText = true,
                     HealthPosition = 0,
                     ShowDistance = true,
-                    ShowWeaponIcon = true,
+                    ShowWeaponName = true,
                     ShowArmor = true,
                     ShowVisibilityIndicator = true,
                     ShowFlags = true,

@@ -29,46 +29,6 @@ public static class EspBox
     private const int OutlineThickness = 1;
     private const float UnitsToMeters = 0.0254f;
 
-    private static readonly Dictionary<string, string> GunIcons = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // Ножи
-        ["knife"] = "[", ["knife_t"] = "[", ["knife_ct"] = "]", ["bayonet"] = "p",
-        ["flipknife"] = "q", ["gutknife"] = "r", ["karambit"] = "s", ["m9bayonet"] = "t",
-        ["tacticalknife"] = "u", ["butterflyknife"] = "v", ["falchionknife"] = "w",
-        ["shadowdaggers"] = "x", ["paracordknife"] = "y", ["survivalknife"] = "z",
-        ["ursusknife"] = "{", ["navajaknife"] = "|", ["nomadknife"] = "}",
-        ["stilettoknife"] = "~", ["talonknife"] = "⌂", ["classicknife"] = "Ç",
-
-        // Пистолеты
-        ["deagle"] = "A", ["elite"] = "B", ["fiveseven"] = "C", ["glock"] = "D",
-        ["hkp2000"] = "E", ["p250"] = "F", ["usp_silencer"] = "G", ["tec9"] = "H",
-        ["cz75a"] = "I", ["revolver"] = "J",
-
-        // SMG
-        ["mac10"] = "K", ["mp9"] = "L", ["mp7"] = "M", ["ump45"] = "N",
-        ["p90"] = "O", ["bizon"] = "P",
-
-        // Штурмовые
-        ["ak47"] = "Q", ["aug"] = "R", ["famas"] = "S", ["galilar"] = "T",
-        ["m4a1"] = "U", ["m4a1_silencer"] = "V", ["sg556"] = "W",
-
-        // Снайперские
-        ["awp"] = "X", ["g3sg1"] = "Y", ["scar20"] = "Z", ["ssg08"] = "a",
-
-        // Дробовики
-        ["mag7"] = "b", ["nova"] = "c", ["sawedoff"] = "d", ["xm1014"] = "e",
-
-        // Пулемёты
-        ["m249"] = "f", ["negev"] = "g",
-
-        // Прочее
-        ["taser"] = "h", ["c4"] = "o",
-
-        // Гранаты
-        ["flashbang"] = "i", ["hegrenade"] = "j", ["smokegrenade"] = "k",
-        ["molotov"] = "l", ["decoy"] = "m", ["incgrenade"] = "n"
-    };
-
     // <<< НОВОЕ: Иконки для статусов в формате Unicode
     private static readonly Dictionary<string, string> StatusIcons = new()
     {
@@ -276,15 +236,14 @@ public static class EspBox
             graphics.DrawText(armorText, armorX, armorY, EspColor.White);
         }
 
-        // === Иконка оружия ===
-        if (config.ShowWeaponIcon && !string.IsNullOrEmpty(entity.CurrentWeaponName))
+        // === Название оружия ===
+        if (config.ShowWeaponName && !string.IsNullOrEmpty(entity.CurrentWeaponName))
         {
-            string icon = GetWeaponIcon(entity.CurrentWeaponName);
-            if (!string.IsNullOrEmpty(icon))
+            string weaponName = GetWeaponName(entity.CurrentWeaponName);
+            if (!string.IsNullOrEmpty(weaponName))
             {
                 int weaponY = (int)(bottomRight.Y + 2);
-                bool useCustom = graphics is ModernGraphics mg && mg.IsUndefeatedFontLoaded;
-                DrawCenteredText(graphics, icon, centerX, weaponY, EspColor.White, 14, useCustom);
+                DrawCenteredText(graphics, weaponName, centerX, weaponY, EspColor.White, 10);
             }
         }
 
@@ -334,11 +293,10 @@ public static class EspBox
         }
     }
 
-    private static string GetWeaponIcon(string? weaponName)
+    private static string GetWeaponName(string? weaponName)
     {
         if (string.IsNullOrEmpty(weaponName)) return string.Empty;
-        string cleanName = weaponName.Replace("weapon_", "", StringComparison.OrdinalIgnoreCase);
-        return GunIcons.GetValueOrDefault(cleanName, "?");
+        return weaponName.Replace("weapon_", "", StringComparison.OrdinalIgnoreCase).ToUpper();
     }
 
     private static uint SetAlpha(uint color, byte alpha)
