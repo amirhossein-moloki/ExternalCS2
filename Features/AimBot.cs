@@ -221,7 +221,27 @@ namespace CS2GameHelper.Features
 
                 if (aimResult.Found)
                 {
-                    AimingMath.GetAimAngles(player, aimResult.TargetPosition, currentRecoilScale, out _, out var angles);
+                    Vector2? patternAngles = null;
+                    var pattern = PatternManager.GetPattern(player.CurrentWeaponName);
+                    if (pattern != null && player.ShotsFired > 0)
+                    {
+                        float cumulativeX = 0;
+                        float cumulativeY = 0;
+                        int count = Math.Min(player.ShotsFired, pattern.Count);
+                        for (int i = 0; i < count; i++)
+                        {
+                            cumulativeX += pattern[i].Dx;
+                            cumulativeY += -pattern[i].Dy;
+                        }
+
+                        // Convert pixels to radians
+                        patternAngles = new Vector2(
+                            (float)(-cumulativeX * _anglePerPixelHorizontal),
+                            (float)(cumulativeY * _anglePerPixelVertical)
+                        );
+                    }
+
+                    AimingMath.GetAimAngles(player, aimResult.TargetPosition, currentRecoilScale, out _, out var angles, patternAngles);
                     AimingMath.GetAimPixels(angles, _anglePerPixelHorizontal, _anglePerPixelVertical, out aimPixels);
 
                     var ctx = new AimContext(

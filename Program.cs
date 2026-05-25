@@ -28,6 +28,7 @@ public sealed class Program : IDisposable
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         Offsets.UpdateOffsets().GetAwaiter().GetResult();
+        PatternManager.LoadPatterns();
 
         _gameProcess = new GameProcess();
         _gameProcess.Start();
