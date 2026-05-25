@@ -25,7 +25,6 @@
 | `aimBotKey` | int | `ConfigManager.AimBotKey` | `1` (`Keys.LButton`) | Hotkey for manual AimBot activation. |
 | `triggerBotKey` | int | `ConfigManager.TriggerBotKey` | `164` (`Keys.LMenu`) | Hotkey for TriggerBot. |
 | `teamCheck` | bool | `ConfigManager.TeamCheck` | `true` | Ignore teammates in AimBot/TriggerBot/ESP. |
-| `standaloneRcs` | bool | `ConfigManager.StandaloneRcs` | `true` | Enable recoil compensation even without a target (No Recoil). |
 
 ---
 
@@ -108,8 +107,17 @@ Maps to `ConfigManager.Esp`.
 | `humanEaseDistancePixels` | double | `ConfigManager.AimBotTuning.HumanEaseDistancePixels` | `35.0` | Pixel distance for easing start. |
 | `humanMinimumGain` | double | `ConfigManager.AimBotTuning.HumanMinimumGain` | `0.15` | Minimum movement gain for humanization. |
 | `aimSmoothing` | double | `ConfigManager.AimBotTuning.AimSmoothing` | `3.0` | AimBot movement smoothing factor. |
-| `recoilScale` | float | `ConfigManager.AimBotTuning.RecoilScale` | `2.0` | Global recoil compensation multiplier. |
-| `weaponRcsScales` | object | `ConfigManager.AimBotTuning.WeaponRcsScales` | `{}` | Per-weapon RCS scale overrides (e.g. `"Ak47": 2.0`). |
+| `recoilScale` | float | `ConfigManager.AimBotTuning.RecoilScale` | `2.0` | Legacy/Global recoil compensation multiplier. |
+
+---
+
+## RCS Settings (`rcs`)
+
+| Field | Type | C# Property | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `enabled` | bool | `ConfigManager.Rcs.Enabled` | `true` | Global toggle for standalone RCS (No Recoil). |
+| `globalScale` | float | `ConfigManager.Rcs.GlobalScale` | `2.0` | Default compensation multiplier. |
+| `weaponScales` | object | `ConfigManager.Rcs.WeaponScales` | `{}` | Per-weapon scale overrides. |
 
 ---
 

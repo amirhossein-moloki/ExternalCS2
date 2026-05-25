@@ -17,6 +17,7 @@ public sealed class Program : IDisposable
     private readonly ModernGraphics _graphics;
     private readonly TriggerBot _triggerBot;
     private readonly AimBot _aimBot;
+    private readonly Rcs _rcs;
     private readonly BombTimer _bombTimer;
     private readonly VoteTeller _voteTeller;
     private readonly ConfigManager _config;
@@ -52,6 +53,12 @@ public sealed class Program : IDisposable
             _aimBot.Start();
         }
 
+        _rcs = new Rcs(_gameProcess, _gameData, _config);
+        if (_config.Rcs.Enabled)
+        {
+            _rcs.Start();
+        }
+
         _bombTimer = new BombTimer(_graphics);
         if (_config.BombTimer)
         {
@@ -65,7 +72,7 @@ public sealed class Program : IDisposable
         }
 
         // Discovery of features for the Management List
-        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _bombTimer, _voteTeller, _graphics);
+        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _rcs, _bombTimer, _voteTeller, _graphics);
     }
 
     public static void Main()
@@ -121,7 +128,7 @@ public sealed class Program : IDisposable
         consoleThread.IsBackground = true;
         consoleThread.Start();
 
-        // Main application loop — блокируемся на токене вместо busy-wait sleep
+        // Main application loop — блокируемся на токেনে вместо busy-wait sleep
         while (!runCts.IsCancellationRequested) { if (User32.PeekMessage(out var msg, IntPtr.Zero, 0, 0, 1)) { User32.TranslateMessage(ref msg); User32.DispatchMessage(ref msg); } else { Thread.Sleep(1); } }
 
         // Аккуратно дожидаемся завершения консольного потока.
@@ -145,6 +152,7 @@ public sealed class Program : IDisposable
             // ВАЖНО: Dispose в обратном порядке создания
             _voteTeller?.Dispose();
             _bombTimer?.Dispose();
+            _rcs?.Dispose();
             _aimBot?.Dispose();
             _triggerBot?.Dispose();
             _graphics?.Dispose();

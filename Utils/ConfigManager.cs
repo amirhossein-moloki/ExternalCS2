@@ -19,7 +19,9 @@ public class ConfigManager
     public Keys MenuToggleKey { get; set; } = Keys.Insert;
     public bool TeamCheck { get; set; } = true;
     public bool AimBotAutoShoot { get; set; } = true;
-    public bool StandaloneRcs { get; set; } = true;
+
+    // New dedicated RCS config object
+    public RcsConfig Rcs { get; set; } = new();
 
     // Вложенные настройки ESP
     public EspConfig Esp { get; set; } = new();
@@ -128,6 +130,13 @@ public class ConfigManager
         public Dictionary<string, float> WeaponRcsScales { get; set; } = new();
     }
 
+    public class RcsConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public float GlobalScale { get; set; } = 2.0f;
+        public Dictionary<string, float> WeaponScales { get; set; } = new();
+    }
+
     public class HitSoundConfig
     {
         public bool Enabled { get; set; } = true;
@@ -177,6 +186,7 @@ public class ConfigManager
             config.HitSound ??= new HitSoundConfig();
             config.VoteTeller ??= new VoteTellerConfig();
             config.AimBotTuning ??= new AimBotTuningConfig();
+        config.Rcs ??= new RcsConfig();
 
             return config;
         }
@@ -229,7 +239,6 @@ public class ConfigManager
     {
         AimBot = other.AimBot;
         AimBotAutoShoot = other.AimBotAutoShoot;
-        StandaloneRcs = other.StandaloneRcs;
         BombTimer = other.BombTimer;
         SkeletonEsp = other.SkeletonEsp;
         SkeletonShowHeadCircle = other.SkeletonShowHeadCircle;
@@ -319,6 +328,13 @@ public class ConfigManager
         AimBotTuning.WeaponRcsScales = other.AimBotTuning.WeaponRcsScales != null
             ? new Dictionary<string, float>(other.AimBotTuning.WeaponRcsScales)
             : new Dictionary<string, float>();
+
+        Rcs ??= new RcsConfig();
+        Rcs.Enabled = other.Rcs.Enabled;
+        Rcs.GlobalScale = other.Rcs.GlobalScale;
+        Rcs.WeaponScales = other.Rcs.WeaponScales != null
+            ? new Dictionary<string, float>(other.Rcs.WeaponScales)
+            : new Dictionary<string, float>();
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -366,7 +382,6 @@ public class ConfigManager
             // Основные флаги
             AimBot = true,
             AimBotAutoShoot = true,
-            StandaloneRcs = true,
             BombTimer = true,
             // УДАЛЕНО: EspAimCrosshair = true,
             SkeletonEsp = true,
@@ -439,6 +454,20 @@ public class ConfigManager
             {
                 RecoilScale = 2.0f,
                 WeaponRcsScales = new Dictionary<string, float>
+                {
+                    { "Ak47", 2.0f },
+                    { "M4A1", 2.0f },
+                    { "M4A1Silencer", 2.0f },
+                    { "Deagle", 1.0f },
+                    { "Glock", 1.5f },
+                    { "UspSilencer", 1.2f }
+                }
+            },
+            Rcs = new RcsConfig
+            {
+                Enabled = true,
+                GlobalScale = 2.0f,
+                WeaponScales = new Dictionary<string, float>
                 {
                     { "Ak47", 2.0f },
                     { "M4A1", 2.0f },

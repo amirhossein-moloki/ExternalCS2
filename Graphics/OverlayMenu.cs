@@ -72,9 +72,16 @@ namespace CS2GameHelper.Graphics
                 new ToggleMenuItem("Enabled", () => _config.AimBot, v => { _config.AimBot = v; }, "Core"),
                 new KeybindMenuItem("Aim Key", () => _config.AimBotKey, v => { _config.AimBotKey = v; }, "Core"),
                 new ToggleMenuItem("Auto Shoot", () => _config.AimBotAutoShoot, v => { _config.AimBotAutoShoot = v; }, "Settings"),
-                new ToggleMenuItem("Team Check", () => _config.TeamCheck, v => { _config.TeamCheck = v; }, "Settings"),
-                new ToggleMenuItem("Standalone RCS", () => _config.StandaloneRcs, v => { _config.StandaloneRcs = v; }, "RCS"),
-                new SliderMenuItem("Recoil Scale", () => _config.AimBotTuning.RecoilScale, v => { _config.AimBotTuning.RecoilScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "RCS")
+                new ToggleMenuItem("Team Check", () => _config.TeamCheck, v => { _config.TeamCheck = v; }, "Settings")
+            }));
+
+            _categories.Add(new MenuCategory("RCS", new List<MenuItem>
+            {
+                new ToggleMenuItem("Enabled", () => _config.Rcs.Enabled, v => { _config.Rcs.Enabled = v; }, "Core"),
+                new SliderMenuItem("Global Scale", () => _config.Rcs.GlobalScale, v => { _config.Rcs.GlobalScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "Settings"),
+                new SliderMenuItem("AK-47 Scale",
+                    () => _config.Rcs.WeaponScales.TryGetValue("Ak47", out var s) ? s : _config.Rcs.GlobalScale,
+                    v => _config.Rcs.WeaponScales["Ak47"] = (float)v, 0.0, 4.0, 0.1, "0.0", "Weapons")
             }));
 
             _categories.Add(new MenuCategory("TriggerBot", new List<MenuItem>
