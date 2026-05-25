@@ -1,0 +1,20 @@
+# Ignore Python cache folders and compiled files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+# Ignore log files
+*.log
+
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.omx/
+.coverage
+coverage.xml
+# Ignore virtual environment folders
+rcs/
+.venv/
