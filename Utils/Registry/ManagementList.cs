@@ -31,14 +31,14 @@ namespace CS2GameHelper.Utils.Registry
         {
             feature.Enabled = !feature.Enabled;
 
-            // Invoke Start/Stop if the instance is a ThreadedServiceBase
-            var startMethod = feature.Instance.GetType().GetMethod("Start");
-            var stopMethod = feature.Instance.GetType().GetMethod("Stop");
-
-            if (feature.Enabled)
-                startMethod?.Invoke(feature.Instance, null);
-            else
-                stopMethod?.Invoke(feature.Instance, null);
+            // Handle ThreadedServiceBase features properly
+            if (feature.Instance is ThreadedServiceBase service)
+            {
+                if (feature.Enabled)
+                    service.Start();
+                else
+                    service.Stop();
+            }
 
             AddLog($"{feature.DisplayName} {(feature.Enabled ? "Enabled" : "Disabled")}");
         }

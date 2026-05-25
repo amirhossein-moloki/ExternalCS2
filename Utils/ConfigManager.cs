@@ -230,7 +230,17 @@ public class ConfigManager
             };
             options.Converters.Add(new KeysJsonConverter());
 
-            var config = JsonSerializer.Deserialize<ConfigManager>(json, options);
+            ConfigManager? config;
+            try
+            {
+                config = JsonSerializer.Deserialize<ConfigManager>(json, options);
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"[Config] Error parsing {ConfigFile}: {ex.Message}");
+                // Instead of overwriting, we use defaults but keep the file as-is for the user to fix.
+                config = Default();
+            }
 
             config ??= Default();
             config.Esp ??= new EspConfig();
@@ -249,11 +259,10 @@ public class ConfigManager
 
             return config;
         }
-        catch
+        catch (Exception ex)
         {
-            var fallback = Default();
-            Save(fallback);
-            return fallback;
+            Console.WriteLine($"[Config] Unexpected error loading {ConfigFile}: {ex.Message}");
+            return Default();
         }
     }
 

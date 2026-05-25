@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 
 namespace CS2GameHelper.Utils;
 
@@ -6,6 +6,7 @@ public abstract class ThreadedServiceBase : IDisposable
 {
     private Thread? _thread;
     private volatile bool _isRunning;
+    private bool _disposed;
 
     protected virtual string ThreadName => nameof(ThreadedServiceBase);
 
@@ -15,16 +16,11 @@ public abstract class ThreadedServiceBase : IDisposable
 
     protected ThreadedServiceBase()
     {
-        _thread = new Thread(ThreadStart)
-        {
-            Name = ThreadName,
-            IsBackground = true
-        };
     }
 
     public void Start()
     {
-        if (_thread == null)
+        if (_disposed)
         {
             throw new ObjectDisposedException(GetType().Name);
         }
@@ -35,7 +31,36 @@ public abstract class ThreadedServiceBase : IDisposable
         }
 
         _isRunning = true;
+        _thread = new Thread(ThreadStart)
+        {
+            Name = ThreadName,
+            IsBackground = true
+        };
         _thread.Start();
+    }
+
+    public void Stop()
+    {
+        if (!_isRunning) return;
+
+        _isRunning = false;
+
+        if (_thread != null && _thread.IsAlive)
+        {
+            try
+            {
+                _thread.Interrupt();
+                if (!_thread.Join(ThreadTimeout))
+                {
+                    // If it didn't stop gracefully, we just move on.
+                    // In a more aggressive implementation we might Abort() but it's deprecated.
+                }
+            }
+            catch (ThreadStateException) { }
+            catch (ThreadInterruptedException) { }
+        }
+
+        _thread = null;
     }
 
     public virtual void Dispose()
@@ -46,52 +71,14 @@ public abstract class ThreadedServiceBase : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposing)
+        if (_disposed) return;
+
+        if (disposing)
         {
-            return;
+            Stop();
         }
 
-        var thread = Interlocked.Exchange(ref _thread, null);
-        if (thread == null)
-        {
-            return;
-        }
-
-        _isRunning = false;
-
-        // Only attempt to interrupt/join if the thread was started and is alive.
-        // Calling Interrupt/Join on an unstarted thread throws ThreadStateException.
-        if (thread.IsAlive)
-        {
-            try
-            {
-                thread.Interrupt();
-            }
-            catch (ThreadStateException)
-            {
-                // thread state changed between checks; ignore and attempt to join below if possible
-            }
-
-            try
-            {
-                if (!thread.Join(ThreadTimeout))
-                {
-                    // fallback: wait indefinitely but guard against ThreadStateException
-                    try
-                    {
-                        thread.Join();
-                    }
-                    catch (ThreadStateException)
-                    {
-                        // ignore
-                    }
-                }
-            }
-            catch (ThreadStateException)
-            {
-                // ignore
-            }
-        }
+        _disposed = true;
     }
 
     private void ThreadStart()
@@ -111,6 +98,15 @@ public abstract class ThreadedServiceBase : IDisposable
         catch (NullReferenceException)
         {
             // legacy behaviour retained for existing services
+        }
+        finally
+        {
+            // Only clear _isRunning if the current thread is the one that was supposed to be running.
+            // This prevents a race condition where a newly started thread's flag is cleared by an exiting old thread.
+            if (ReferenceEquals(Thread.CurrentThread, _thread))
+            {
+                _isRunning = false;
+            }
         }
     }
 

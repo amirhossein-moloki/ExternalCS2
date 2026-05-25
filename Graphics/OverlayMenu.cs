@@ -22,6 +22,7 @@ namespace CS2GameHelper.Graphics
         private int _selectedSubItem = -1;
         private bool _isInSubMenu = false;
         private bool _editingValue = false;
+        private bool _hasUnsavedChanges = false;
         private string _editBuffer = "";
         private bool _toggleKeyLastState;
         private DateTime _suppressToggleUntil = DateTime.MinValue;
@@ -290,7 +291,7 @@ namespace CS2GameHelper.Graphics
                 if (_selectedItem != -1)
                 {
                     var item = _categories[_selectedCategory].Items[_selectedItem];
-                    if (item is ToggleMenuItem toggle) toggle.Toggle();
+                    if (item is ToggleMenuItem toggle) { toggle.Toggle(); _hasUnsavedChanges = true; }
                     else if (item is ActionMenuItem action) action.Invoke();
                     else if (item is KeybindMenuItem) _editingValue = true;
 
@@ -353,7 +354,7 @@ namespace CS2GameHelper.Graphics
                 if (_selectedItem != -1)
                 {
                     var item = _categories[_selectedCategory].Items[_selectedItem];
-                    if (item is ToggleMenuItem toggle) toggle.Toggle();
+                    if (item is ToggleMenuItem toggle) { toggle.Toggle(); _hasUnsavedChanges = true; }
                     else if (item is ActionMenuItem action) action.Invoke();
                     else if (item is KeybindMenuItem) _editingValue = true;
                 }
@@ -369,11 +370,13 @@ namespace CS2GameHelper.Graphics
                     if (_inputHandler.IsKeyDown(Keys.Left))
                     {
                         slider.Decrement();
+                        _hasUnsavedChanges = true;
                         keyPressed = true;
                     }
                     else if (_inputHandler.IsKeyDown(Keys.Right))
                     {
                         slider.Increment();
+                        _hasUnsavedChanges = true;
                         keyPressed = true;
                     }
                 }
@@ -390,7 +393,7 @@ namespace CS2GameHelper.Graphics
                 if (_inputHandler.IsKeyDown(key))
                 {
                     var item = _categories[_selectedCategory].Items[_selectedItem];
-                    if (item is KeybindMenuItem kb) kb.SetValue(key);
+                    if (item is KeybindMenuItem kb) { kb.SetValue(key); _hasUnsavedChanges = true; }
                     _editingValue = false;
                     _lastKeyPress = now;
                     break;
@@ -515,8 +518,8 @@ namespace CS2GameHelper.Graphics
             }
         }
 
-        private void SaveConfig() => ConfigManager.Save(_config);
-        public void Dispose() => SaveConfig();
+        private void SaveConfig() { if (_hasUnsavedChanges) { ConfigManager.Save(_config); _hasUnsavedChanges = false; } }
+        public void Dispose() { /* No longer auto-saving on exit to prevent overwriting manual edits */ }
 
         internal static string FormatKey(Keys key)
         {

@@ -123,6 +123,8 @@ namespace CS2GameHelper.Features
 
         protected override void FrameAction()
         {
+            if (!_config.AimBot) return;
+
             bool isManualMode = IsHotKeyDown();
             bool isAutoMode = _config.AimBotAutoShoot;
 
