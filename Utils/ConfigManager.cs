@@ -8,7 +8,17 @@ public class ConfigManager
     private const string ConfigFile = "config.json";
 
     // Основные флаги
-    public bool AimBot { get; set; } = true;
+    private bool _aimBot = true;
+    public bool AimBot
+    {
+        get => _aimBot;
+        set
+        {
+            _aimBot = value;
+            if (_aimBot && NoRecoil != null && NoRecoil.Enabled)
+                NoRecoil.Enabled = false;
+        }
+    }
     public bool BombTimer { get; set; } = true;
     // УДАЛЕНО: public bool EspAimCrosshair { get; set; } = true;
     public bool SkeletonEsp { get; set; } = true;
@@ -21,7 +31,14 @@ public class ConfigManager
     public bool AimBotAutoShoot { get; set; } = true;
 
     // New dedicated RCS config object
-    public RcsConfig Rcs { get; set; } = new();
+    private RcsConfig _rcs = new();
+    public RcsConfig Rcs
+    {
+        get => _rcs;
+        set => _rcs = value;
+    }
+
+    public NoRecoilConfig NoRecoil { get; set; } = new();
 
     // Вложенные настройки ESP
     public EspConfig Esp { get; set; } = new();
@@ -132,9 +149,47 @@ public class ConfigManager
 
     public class RcsConfig
     {
-        public bool Enabled { get; set; } = true;
+        private bool _enabled = true;
+        private ConfigManager? _parent;
+
+        internal void SetParent(ConfigManager parent) => _parent = parent;
+
+        public bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                _enabled = value;
+                if (_enabled && _parent != null && _parent.NoRecoil != null && _parent.NoRecoil.Enabled)
+                    _parent.NoRecoil.Enabled = false;
+            }
+        }
         public float GlobalScale { get; set; } = 2.0f;
         public Dictionary<string, float> WeaponScales { get; set; } = new();
+    }
+
+    public class NoRecoilConfig
+    {
+        private bool _enabled = false;
+        private ConfigManager? _parent;
+
+        internal void SetParent(ConfigManager parent) => _parent = parent;
+
+        public bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                _enabled = value;
+                if (_enabled && _parent != null)
+                {
+                    if (_parent.AimBot) _parent.AimBot = false;
+                    if (_parent.Rcs != null && _parent.Rcs.Enabled) _parent.Rcs.Enabled = false;
+                }
+            }
+        }
+        public float HorizontalScale { get; set; } = 1.0f;
+        public float VerticalScale { get; set; } = 1.0f;
     }
 
     public class HitSoundConfig
@@ -186,7 +241,11 @@ public class ConfigManager
             config.HitSound ??= new HitSoundConfig();
             config.VoteTeller ??= new VoteTellerConfig();
             config.AimBotTuning ??= new AimBotTuningConfig();
-        config.Rcs ??= new RcsConfig();
+            config.Rcs ??= new RcsConfig();
+            config.NoRecoil ??= new NoRecoilConfig();
+
+            config.Rcs.SetParent(config);
+            config.NoRecoil.SetParent(config);
 
             return config;
         }
@@ -330,11 +389,18 @@ public class ConfigManager
             : new Dictionary<string, float>();
 
         Rcs ??= new RcsConfig();
+        Rcs.SetParent(this);
         Rcs.Enabled = other.Rcs.Enabled;
         Rcs.GlobalScale = other.Rcs.GlobalScale;
         Rcs.WeaponScales = other.Rcs.WeaponScales != null
             ? new Dictionary<string, float>(other.Rcs.WeaponScales)
             : new Dictionary<string, float>();
+
+        NoRecoil ??= new NoRecoilConfig();
+        NoRecoil.SetParent(this);
+        NoRecoil.Enabled = other.NoRecoil.Enabled;
+        NoRecoil.HorizontalScale = other.NoRecoil.HorizontalScale;
+        NoRecoil.VerticalScale = other.NoRecoil.VerticalScale;
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -377,7 +443,7 @@ public class ConfigManager
 
     public static ConfigManager Default()
     {
-        return new ConfigManager
+        var config = new ConfigManager
         {
             // Основные флаги
             AimBot = true,
@@ -476,7 +542,16 @@ public class ConfigManager
                     { "Glock", 1.5f },
                     { "UspSilencer", 1.2f }
                 }
+            },
+            NoRecoil = new NoRecoilConfig
+            {
+                Enabled = false,
+                HorizontalScale = 1.0f,
+                VerticalScale = 1.0f
             }
         };
+        config.Rcs.SetParent(config);
+        config.NoRecoil.SetParent(config);
+        return config;
     }
 }
