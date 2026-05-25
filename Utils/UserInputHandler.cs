@@ -13,7 +13,9 @@ namespace CS2GameHelper.Utils
         WmLButtonDown = 0x0201,
         WmLButtonUp = 0x0202,
         WmRButtonDown = 0x0204,
-        WmRButtonUp = 0x0205
+        WmRButtonUp = 0x0205,
+        WmXButtonDown = 0x020B,
+        WmXButtonUp = 0x020C
     }
 
     public enum KeyboardMessages
@@ -75,6 +77,21 @@ namespace CS2GameHelper.Utils
                     case MouseMessages.WmRButtonUp:
                         IsRightMouseDown = false;
                         _pressedKeys.Remove(Keys.RButton);
+                        break;
+
+                    case MouseMessages.WmXButtonDown:
+                        {
+                            var xButton = (mouseStruct.MouseData >> 16) & 0xFFFF;
+                            if (xButton == 1) _pressedKeys.Add(Keys.XButton1);
+                            else if (xButton == 2) _pressedKeys.Add(Keys.XButton2);
+                        }
+                        break;
+                    case MouseMessages.WmXButtonUp:
+                        {
+                            var xButton = (mouseStruct.MouseData >> 16) & 0xFFFF;
+                            if (xButton == 1) _pressedKeys.Remove(Keys.XButton1);
+                            else if (xButton == 2) _pressedKeys.Remove(Keys.XButton2);
+                        }
                         break;
                 }
             }

@@ -37,6 +37,9 @@ namespace CS2GameHelper.Features.Aiming
                 entity.AddressBase != gameData.Player.AddressBase &&
                 entity.Team != gameData.Player.Team))
             {
+                // Visibility check (IsSpotted)
+                if (!entity.IsSpotted) continue;
+
                 Vector3 targetVelocity = entity.Velocity;
                 float distanceToTarget = Vector3.Distance(playerPos, entity.Position);
 
@@ -61,8 +64,12 @@ namespace CS2GameHelper.Features.Aiming
 
                     if (effectiveAngle > customFov) continue;
 
+                    // Priority weight: "head" gets the lowest multiplier (best score)
+                    float priorityWeight = bone == "head" ? 0.5f : 1.0f;
+                    if (bone == "neck_0") priorityWeight = 0.8f;
+
                     // Score: smaller angle is much better than closer distance
-                    float score = (float)(effectiveAngle * 100.0 + distanceToTarget / 1000.0);
+                    float score = (float)((effectiveAngle * 100.0 + distanceToTarget / 1000.0) * priorityWeight);
 
                     if (score < minScore)
                     {
