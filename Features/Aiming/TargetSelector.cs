@@ -44,8 +44,10 @@ namespace CS2GameHelper.Features.Aiming
                 float distanceToTarget = Vector3.Distance(playerPos, entity.Position);
 
                 Vector3 relativeVelocity = targetVelocity - playerVel;
-                // Prediction based on travel time + approx latency
-                float predictionTime = 0.015f + (distanceToTarget / 20000f);
+                // Prediction based on travel time + approx latency.
+                // Since CS2 is hitscan, we only need to account for network latency and human/system delay.
+                // We use a small fixed time (15ms-30ms) for this.
+                float predictionTime = 0.015f + Math.Min(distanceToTarget / 50000f, 0.015f);
 
                 foreach (var bone in AimBonePriority)
                 {

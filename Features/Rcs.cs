@@ -17,16 +17,18 @@ namespace CS2GameHelper.Features
         private readonly GameProcess _gameProcess;
         private readonly GameData _gameData;
         private readonly ConfigManager _config;
+        private readonly AimBot? _aimBot;
 
         private int _lastShotsFired = 0;
         private float _sumX = 0;
         private float _sumY = 0;
 
-        public Rcs(GameProcess gameProcess, GameData gameData, ConfigManager config)
+        public Rcs(GameProcess gameProcess, GameData gameData, ConfigManager config, AimBot? aimBot = null)
         {
             _gameProcess = gameProcess;
             _gameData = gameData;
             _config = config;
+            _aimBot = aimBot;
         }
 
         protected override string ThreadName => nameof(Rcs);
@@ -34,6 +36,15 @@ namespace CS2GameHelper.Features
         protected override void FrameAction()
         {
             if (!_config.Rcs.Enabled) return;
+
+            // If AimBot is actively moving the mouse to a target, it already accounts for RCS.
+            if (_aimBot != null && _aimBot.IsActivelyTargeting)
+            {
+                _lastShotsFired = 0;
+                _sumX = 0;
+                _sumY = 0;
+                return;
+            }
 
             try
             {

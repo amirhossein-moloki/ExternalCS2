@@ -23,6 +23,8 @@ namespace CS2GameHelper.Features
     [Feature("aimbot", "Legit Aimbot", "Aimbot")]
     public class AimBot : ThreadedServiceBase
     {
+        public bool IsActivelyTargeting { get; private set; }
+
         private const int SuppressMs = 200;
         private const int UserMouseDeltaResetMs = 50;
         private const int AimEventWindowMs = 1000;
@@ -48,7 +50,6 @@ namespace CS2GameHelper.Features
         private readonly TargetSelector _targetSelector;
         private readonly UserInputHandler _inputHandler;
 
-        private AimBotState _currentState = AimBotState.Up;
         private double _aiAggressiveness = 1.0;
         private int _aimSuccessCount, _aimTotalCount;
         private double _dynamicFov = GraphicsMath.DegreeToRadian(15f);
@@ -123,25 +124,43 @@ namespace CS2GameHelper.Features
 
         protected override void FrameAction()
         {
-            if (!_config.AimBot) return;
+            if (!_config.AimBot)
+            {
+                IsActivelyTargeting = false;
+                return;
+            }
 
             bool isManualMode = IsHotKeyDown();
             bool isAutoMode = _config.AimBotAutoShoot;
 
-            if (!isManualMode && !isAutoMode) return;
+            if (!isManualMode && !isAutoMode)
+            {
+                IsActivelyTargeting = false;
+                return;
+            }
 
             try
             {
                 if (GameProcess == null || !GameProcess.IsValid || GameData?.Player == null)
+                {
+                    IsActivelyTargeting = false;
                     return;
+                }
 
                 var player = GameData.Player;
                 if (!player.IsAlive())
+                {
+                    IsActivelyTargeting = false;
                     return;
+                }
 
                 var userMoveLen = Math.Sqrt(_inputHandler.LastMouseDelta.X * (double)_inputHandler.LastMouseDelta.X + _inputHandler.LastMouseDelta.Y * (double)_inputHandler.LastMouseDelta.Y);
                 if (userMoveLen > _humanReactThreshold) _lastSuppressed = DateTime.Now;
-                if ((DateTime.Now - _lastSuppressed).TotalMilliseconds < SuppressMs) return;
+                if ((DateTime.Now - _lastSuppressed).TotalMilliseconds < SuppressMs)
+                {
+                    IsActivelyTargeting = false;
+                    return;
+                }
 
                 if (!_isCalibrated)
                 {
@@ -180,11 +199,13 @@ namespace CS2GameHelper.Features
                         _activeTargetId = aimResult.TargetId;
                         _lastTargetLockTime = DateTime.Now;
                     }
+                    IsActivelyTargeting = isManualMode || isAutoMode;
                 }
                 else
                 {
                     _activeTargetId = -1;
                     _lastTargetLockTime = DateTime.MinValue;
+                    IsActivelyTargeting = false;
                 }
                 Point aimPixels = Point.Empty;
 
@@ -255,8 +276,8 @@ namespace CS2GameHelper.Features
                         targetAccelMag);
                     var correction = _correctionProvider.GetCorrection(in ctx);
 
-                    aimPixels.X = (int)Math.Round(aimPixels.X - correction.X);
-                    aimPixels.Y = (int)Math.Round(aimPixels.Y - correction.Y);
+                    aimPixels.X = (int)Math.Round(aimPixels.X + correction.X);
+                    aimPixels.Y = (int)Math.Round(aimPixels.Y + correction.Y);
                 }
 
                 ApplyHumanizedAimAdjustments(ref aimPixels, aimResult);
@@ -300,23 +321,9 @@ namespace CS2GameHelper.Features
                 {
                     if (Math.Abs(aimPixels.X) > 3 || Math.Abs(aimPixels.Y) > 3)
                     {
-                        // Use Bezier-augmented movement for larger jumps to look more human
-                        var start = Vector2.Zero;
-                        var end = new Vector2(aimPixels.X, aimPixels.Y);
-                        var ctrl1 = new Vector2(aimPixels.X * 0.25f, (float)(aimPixels.Y * 0.1f + _humanizationRandom.Next(-2, 2)));
-                        var ctrl2 = new Vector2(aimPixels.X * 0.75f, (float)(aimPixels.Y * 0.9f + _humanizationRandom.Next(-2, 2)));
-
-                        // Sample the Bezier path
-                        var p1 = AimingMath.GetBezierPoint(0.5f, start, ctrl1, ctrl2, end);
-
-                        // Execute first half of the curve with WindMouseMove
-                        Utility.WindMouseMove((int)p1.X, (int)p1.Y, G_0: 8.0, W_0: 2.5, M_0: 12.0, D_0: 10.0);
-
-                        // Execute second half as a direct correction
-                        var remainingX = aimPixels.X - (int)p1.X;
-                        var remainingY = aimPixels.Y - (int)p1.Y;
-                        if (remainingX != 0 || remainingY != 0)
-                            Utility.MouseMove(remainingX, remainingY);
+                        // Use WindMouseMove for larger jumps to look more human.
+                        // It already implements a sophisticated curved path internally.
+                        Utility.WindMouseMove(aimPixels.X, aimPixels.Y, G_0: 8.0, W_0: 2.5, M_0: 12.0, D_0: 10.0);
                     }
                     else
                     {
