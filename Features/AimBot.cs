@@ -214,12 +214,7 @@ namespace CS2GameHelper.Features
                     _lastTargetVelocity = Vector3.Zero;
                 }
 
-                float currentRecoilScale = _config.AimBotTuning.RecoilScale;
-                if (player.CurrentWeaponName != null &&
-                    _config.AimBotTuning.WeaponRcsScales.TryGetValue(player.CurrentWeaponName, out var customScale))
-                {
-                    currentRecoilScale = customScale;
-                }
+                float currentRecoilScale = _config.Rcs.GlobalScale;
 
                 if (aimResult.Found)
                 {
@@ -237,9 +232,13 @@ namespace CS2GameHelper.Features
                         }
 
                         // Convert pixels to radians
+                        // Pattern stores movement to compensate recoil.
+                        // cumulativeX, cumulativeY are total pixels to move.
+                        // scale/2.0 is because RCS uses it, we should be consistent.
+                        float scaleFactor = currentRecoilScale / 2.0f;
                         patternAngles = new Vector2(
-                            (float)(-cumulativeX * _anglePerPixelHorizontal),
-                            (float)(cumulativeY * _anglePerPixelVertical)
+                            (float)(-cumulativeX * scaleFactor * _anglePerPixelHorizontal),
+                            (float)(cumulativeY * scaleFactor * _anglePerPixelVertical)
                         );
                     }
 
