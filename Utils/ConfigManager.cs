@@ -113,6 +113,39 @@ public class ConfigManager
         public bool Enabled { get; set; } = true;
     }
 
+    public Dictionary<string, WeaponProfile> WeaponProfiles { get; set; } = new();
+
+    public class WeaponProfile
+    {
+        public float Multiple { get; set; } = 1.0f;
+        public float SleepDivider { get; set; } = 1.0f;
+        public float SleepSuber { get; set; } = 0.0f;
+        public float JitterTiming { get; set; } = 0.0f;
+        public float JitterMovement { get; set; } = 0.0f;
+    }
+
+    public MovementConfig Movement { get; set; } = new();
+    public class MovementConfig
+    {
+        public bool Bhop { get; set; } = false;
+        public bool AutoStrafe { get; set; } = false;
+    }
+
+    public AdvancedVisualsConfig AdvancedVisuals { get; set; } = new();
+    public class AdvancedVisualsConfig
+    {
+        public bool GlowEsp { get; set; } = false;
+        public bool Backtracking { get; set; } = false;
+    }
+
+    public FollowRcsConfig FollowRcs { get; set; } = new();
+    public class FollowRcsConfig
+    {
+        public bool Enabled { get; set; } = false;
+        public float DotSize { get; set; } = 3.0f;
+        public string Color { get; set; } = "FF0000FF"; // Blue
+    }
+
     // Hit sound and on-screen hit text configuration
     public HitSoundConfig HitSound { get; set; } = new();
 
@@ -200,6 +233,10 @@ public class ConfigManager
             config.VoteTeller ??= new VoteTellerConfig();
             config.AimBotTuning ??= new AimBotTuningConfig();
             config.Rcs ??= new RcsConfig();
+            config.WeaponProfiles ??= new Dictionary<string, WeaponProfile>();
+            config.Movement ??= new MovementConfig();
+            config.AdvancedVisuals ??= new AdvancedVisualsConfig();
+            config.FollowRcs ??= new FollowRcsConfig();
 
             return config;
         }
@@ -341,6 +378,24 @@ public class ConfigManager
         Rcs.Enabled = other.Rcs.Enabled;
         Rcs.GlobalScale = other.Rcs.GlobalScale;
         Rcs.Sensitivity = other.Rcs.Sensitivity;
+
+        WeaponProfiles = new Dictionary<string, WeaponProfile>(other.WeaponProfiles);
+        Movement = new MovementConfig
+        {
+            Bhop = other.Movement.Bhop,
+            AutoStrafe = other.Movement.AutoStrafe
+        };
+        AdvancedVisuals = new AdvancedVisualsConfig
+        {
+            GlowEsp = other.AdvancedVisuals.GlowEsp,
+            Backtracking = other.AdvancedVisuals.Backtracking
+        };
+        FollowRcs = new FollowRcsConfig
+        {
+            Enabled = other.FollowRcs.Enabled,
+            DotSize = other.FollowRcs.DotSize,
+            Color = other.FollowRcs.Color
+        };
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -462,7 +517,30 @@ public class ConfigManager
                 Enabled = true,
                 GlobalScale = 2.0f,
                 Sensitivity = 1.0f
-            }
+            },
+            WeaponProfiles = new Dictionary<string, WeaponProfile>
+            {
+                { "ak47", new WeaponProfile { Multiple = 6.0f, SleepDivider = 6.0f, SleepSuber = -0.1f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "m4a4", new WeaponProfile { Multiple = 4.0f, SleepDivider = 4.0f, SleepSuber = -0.5f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "m4a1", new WeaponProfile { Multiple = 4.0f, SleepDivider = 4.0f, SleepSuber = -0.6f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "galil", new WeaponProfile { Multiple = 4.0f, SleepDivider = 4.0f, SleepSuber = -0.8f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "famas", new WeaponProfile { Multiple = 4.0f, SleepDivider = 4.0f, SleepSuber = -0.4f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "sg553", new WeaponProfile { Multiple = 4.0f, SleepDivider = 4.0f, SleepSuber = -0.9f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "aug", new WeaponProfile { Multiple = 4.0f, SleepDivider = 4.0f, SleepSuber = -0.9f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "p90", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -0.7f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "bizon", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = 0.9f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "ump45", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -0.4f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "mac10", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -2.2f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "mp5sd", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = 0.0f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "mp7", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = 0.1f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "mp9", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -0.3f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "m249", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -1.0f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "negev", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -1.5f, JitterTiming = 1.0f, JitterMovement = 1.0f } },
+                { "cz75", new WeaponProfile { Multiple = 3.0f, SleepDivider = 3.0f, SleepSuber = -3.0f, JitterTiming = 1.0f, JitterMovement = 1.0f } }
+            },
+            Movement = new MovementConfig(),
+            AdvancedVisuals = new AdvancedVisualsConfig(),
+            FollowRcs = new FollowRcsConfig()
         };
         return config;
     }

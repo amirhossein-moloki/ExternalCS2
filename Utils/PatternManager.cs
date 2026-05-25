@@ -115,6 +115,17 @@ namespace CS2GameHelper.Utils
 
         private static void ApplyWeaponDefaults(WeaponInfo info)
         {
+            var config = ConfigManager.Load();
+            if (config.WeaponProfiles.TryGetValue(info.Name.ToLower(), out var profile))
+            {
+                info.Multiple = profile.Multiple;
+                info.SleepDivider = profile.SleepDivider;
+                info.SleepSuber = profile.SleepSuber;
+                info.JitterTiming = profile.JitterTiming;
+                info.JitterMovement = profile.JitterMovement;
+                return;
+            }
+
             switch (info.Name.ToLower())
             {
                 case "ak47": info.Multiple = 6.0f; info.SleepDivider = 6.0f; info.SleepSuber = -0.1f; info.JitterTiming = 1.0f; info.JitterMovement = 1.0f; break;

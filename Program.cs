@@ -18,6 +18,7 @@ public sealed class Program : IDisposable
     private readonly TriggerBot _triggerBot;
     private readonly AimBot _aimBot;
     private readonly Rcs _rcs;
+    private readonly Movement _movement;
     private readonly BombTimer _bombTimer;
     private readonly VoteTeller _voteTeller;
     private readonly ConfigManager _config;
@@ -60,6 +61,9 @@ public sealed class Program : IDisposable
             _rcs.Start();
         }
 
+        _movement = new Movement(_gameProcess, _gameData, _inputHandler, _config);
+        _movement.Start();
+
         _bombTimer = new BombTimer(_graphics);
         if (_config.BombTimer)
         {
@@ -73,7 +77,7 @@ public sealed class Program : IDisposable
         }
 
         // Discovery of features for the Management List
-        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _rcs, _bombTimer, _voteTeller, _graphics);
+        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _rcs, _bombTimer, _voteTeller, _graphics, _movement);
     }
 
     public static void Main()
@@ -129,8 +133,40 @@ public sealed class Program : IDisposable
         consoleThread.IsBackground = true;
         consoleThread.Start();
 
-        // Main application loop — блокируемся на токেনে вместо busy-wait sleep
-        while (!runCts.IsCancellationRequested) { if (User32.PeekMessage(out var msg, IntPtr.Zero, 0, 0, 1)) { User32.TranslateMessage(ref msg); User32.DispatchMessage(ref msg); } else { Thread.Sleep(1); } }
+        // Main application loop — блокируемся на токене вместо busy-wait sleep
+        bool f2WasDown = false;
+        while (!runCts.IsCancellationRequested)
+        {
+            bool f2IsDown = program._inputHandler.IsKeyDown(Keys.F2);
+            if (f2IsDown && !f2WasDown)
+            {
+                var thread = new Thread(() =>
+                {
+                    try
+                    {
+                        var window = new Graphics.ManagementWindow(config, program._rcs, program._movement);
+                        window.ShowDialog();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[GUI] Error showing management window: {ex.Message}");
+                    }
+                });
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+            }
+            f2WasDown = f2IsDown;
+
+            if (User32.PeekMessage(out var msg, IntPtr.Zero, 0, 0, 1))
+            {
+                User32.TranslateMessage(ref msg);
+                User32.DispatchMessage(ref msg);
+            }
+            else
+            {
+                Thread.Sleep(1);
+            }
+        }
 
         // Аккуратно дожидаемся завершения консольного потока.
         consoleThread.Join(TimeSpan.FromSeconds(1));
@@ -153,6 +189,7 @@ public sealed class Program : IDisposable
             // ВАЖНО: Dispose в обратном порядке создания
             _voteTeller?.Dispose();
             _bombTimer?.Dispose();
+            _movement?.Dispose();
             _rcs?.Dispose();
             _aimBot?.Dispose();
             _triggerBot?.Dispose();
