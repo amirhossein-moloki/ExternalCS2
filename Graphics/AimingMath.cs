@@ -11,7 +11,7 @@ namespace CS2GameHelper.Graphics
         /// <summary>
         /// Calculates the required aim angle deltas to reach pointWorld from the current player's state.
         /// </summary>
-        public static void GetAimAngles(Player player, Vector3 pointWorld, out float angleSize, out Vector2 aimAngles)
+        public static void GetAimAngles(Player player, Vector3 pointWorld, float recoilScale, out float angleSize, out Vector2 aimAngles)
         {
             aimAngles = Vector2.Zero;
             angleSize = 0f;
@@ -26,9 +26,9 @@ namespace CS2GameHelper.Graphics
             double targetYaw = Math.Atan2(dirToTarget.Y, dirToTarget.X) * (180.0 / Math.PI);
             double targetPitch = Math.Asin(-dirToTarget.Z) * (180.0 / Math.PI);
 
-            // Deltas
-            double deltaYaw = targetYaw - currentAngles.Y;
-            double deltaPitch = targetPitch - (currentAngles.X + player.AimPunchAngle.X * 2.0); // Simple recoil comp
+            // Deltas with proper recoil compensation for both axes
+            double deltaYaw = targetYaw - (currentAngles.Y + player.AimPunchAngle.Y * recoilScale);
+            double deltaPitch = targetPitch - (currentAngles.X + player.AimPunchAngle.X * recoilScale);
 
             // Normalize Yaw
             while (deltaYaw > 180) deltaYaw -= 360;

@@ -99,6 +99,28 @@ Maps to `ConfigManager.Esp`.
 
 ---
 
+## AimBot Tuning (`aimBotTuning`)
+
+| Field | Type | C# Property | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `humanReactThreshold` | double | `ConfigManager.AimBotTuning.HumanReactThreshold` | `30.0` | Suppression threshold for manual mouse movement. |
+| `humanEaseDistancePixels` | double | `ConfigManager.AimBotTuning.HumanEaseDistancePixels` | `35.0` | Pixel distance for easing start. |
+| `humanMinimumGain` | double | `ConfigManager.AimBotTuning.HumanMinimumGain` | `0.15` | Minimum movement gain for humanization. |
+| `aimSmoothing` | double | `ConfigManager.AimBotTuning.AimSmoothing` | `3.0` | AimBot movement smoothing factor. |
+| `recoilScale` | float | `ConfigManager.AimBotTuning.RecoilScale` | `2.0` | Legacy/Global recoil compensation multiplier. |
+
+---
+
+## RCS Settings (`rcs`)
+
+| Field | Type | C# Property | Default | Description |
+|-------|------|-------------|---------|-------------|
+| `enabled` | bool | `ConfigManager.Rcs.Enabled` | `true` | Global toggle for standalone RCS (No Recoil). |
+| `globalScale` | float | `ConfigManager.Rcs.GlobalScale` | `2.0` | Default compensation multiplier. |
+| `weaponScales` | object | `ConfigManager.Rcs.WeaponScales` | `{}` | Per-weapon scale overrides. |
+
+---
+
 ## Defaults & Loader Behavior
 
 - Defaults set in `ConfigManager.Default()`.

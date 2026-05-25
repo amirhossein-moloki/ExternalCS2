@@ -130,7 +130,11 @@ namespace CS2GameHelper.Features
 
             try
             {
-                if (GameProcess == null || !GameProcess.IsValid || GameData?.Player == null || !GameData.Player.IsAlive())
+                if (GameProcess == null || !GameProcess.IsValid || GameData?.Player == null)
+                    return;
+
+                var player = GameData.Player;
+                if (!player.IsAlive())
                     return;
 
                 var userMoveLen = Math.Sqrt(_inputHandler.LastMouseDelta.X * (double)_inputHandler.LastMouseDelta.X + _inputHandler.LastMouseDelta.Y * (double)_inputHandler.LastMouseDelta.Y);
@@ -208,15 +212,22 @@ namespace CS2GameHelper.Features
                     _lastTargetVelocity = Vector3.Zero;
                 }
 
+                float currentRecoilScale = _config.AimBotTuning.RecoilScale;
+                if (player.CurrentWeaponName != null &&
+                    _config.AimBotTuning.WeaponRcsScales.TryGetValue(player.CurrentWeaponName, out var customScale))
+                {
+                    currentRecoilScale = customScale;
+                }
+
                 if (aimResult.Found)
                 {
-                    var angles = aimResult.AimAngles;
+                    AimingMath.GetAimAngles(player, aimResult.TargetPosition, currentRecoilScale, out _, out var angles);
                     AimingMath.GetAimPixels(angles, _anglePerPixelHorizontal, _anglePerPixelVertical, out aimPixels);
 
                     var ctx = new AimContext(
                         aimResult.Distance,
                         aimResult.TargetPosition,
-                        GameData.Player.EyePosition,
+                        player.EyePosition,
                         aimResult.TargetVelocity,
                         deltaTimeMs,
                         aimSpeed,
@@ -248,9 +259,9 @@ namespace CS2GameHelper.Features
 
                 var shouldWait = false;
 
-                if (aimResult.Found && isAutoMode)
+                if (aimResult.Found && (isManualMode || isAutoMode))
                 {
-                    if ((DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
+                    if (isAutoMode && (DateTime.Now - _lastShotTime).TotalMilliseconds > _minShootIntervalMs)
                     {
                         Utility.MouseLeftDown();
                         Thread.Sleep(10);
@@ -264,7 +275,7 @@ namespace CS2GameHelper.Features
                     }
                 }
 
-                if (aimPixels.X != 0 || aimPixels.Y != 0)
+                if ((isManualMode || isAutoMode) && (aimPixels.X != 0 || aimPixels.Y != 0))
                 {
                     if (Math.Abs(aimPixels.X) > 3 || Math.Abs(aimPixels.Y) > 3)
                     {
@@ -298,13 +309,13 @@ namespace CS2GameHelper.Features
                 if (aimResult.Found) _aimSuccessCount++;
 
                 // === СБОР ОСТАТКОВ БЕЗ SLEEP ===
-                if (aimResult.Found && GameData?.Player != null)
+                if (aimResult.Found)
                 {
                     // 1. Сохраняем НАПРАВЛЕНИЕ ДО движения мыши
-                    var aimDirectionBefore = GameData.Player.AimDirection;
+                    var aimDirectionBefore = player.AimDirection;
 
                     // 2. Вычисляем ЖЕЛАЕМЫЙ вектор взгляда
-                    var desiredDirection = (aimResult.TargetPosition - GameData.Player.EyePosition).GetNormalized();
+                    var desiredDirection = (aimResult.TargetPosition - player.EyePosition).GetNormalized();
 
                     // 3. Вычисляем УГЛОВУЮ ошибку (в радианах)
                     var horizontalError = desiredDirection.GetSignedAngleTo(aimDirectionBefore, new Vector3(0, 0, 1));
@@ -327,7 +338,7 @@ namespace CS2GameHelper.Features
                     var obsCtx = new AimContext(
                         aimResult.Distance,
                         aimResult.TargetPosition,
-                        GameData.Player.EyePosition,
+                        player.EyePosition,
                         aimResult.TargetVelocity,
                         deltaTimeMs,
                         aimSpeed,

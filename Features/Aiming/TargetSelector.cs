@@ -74,7 +74,7 @@ namespace CS2GameHelper.Features.Aiming
                     if (score < minScore)
                     {
                         minScore = score;
-                        AimingMath.GetAimAngles(gameData.Player, predictedPos, out _, out bestAimAngles);
+                        AimingMath.GetAimAngles(gameData.Player, predictedPos, 0f, out _, out bestAimAngles);
 
                         bestAimPosition = predictedPos;
                         bestDistance = distanceToTarget;

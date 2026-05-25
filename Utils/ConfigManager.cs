@@ -20,6 +20,9 @@ public class ConfigManager
     public bool TeamCheck { get; set; } = true;
     public bool AimBotAutoShoot { get; set; } = true;
 
+    // New dedicated RCS config object
+    public RcsConfig Rcs { get; set; } = new();
+
     // Вложенные настройки ESP
     public EspConfig Esp { get; set; } = new();
 
@@ -123,6 +126,15 @@ public class ConfigManager
         public int AimUpdateIntervalMs { get; set; } = 500;
         // 0 → случайный seed (недетерминированный). Другое → воспроизводимый джиттер.
         public int HumanizationSeed { get; set; } = 0;
+        public float RecoilScale { get; set; } = 2.0f;
+        public Dictionary<string, float> WeaponRcsScales { get; set; } = new();
+    }
+
+    public class RcsConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public float GlobalScale { get; set; } = 2.0f;
+        public Dictionary<string, float> WeaponScales { get; set; } = new();
     }
 
     public class HitSoundConfig
@@ -174,6 +186,7 @@ public class ConfigManager
             config.HitSound ??= new HitSoundConfig();
             config.VoteTeller ??= new VoteTellerConfig();
             config.AimBotTuning ??= new AimBotTuningConfig();
+        config.Rcs ??= new RcsConfig();
 
             return config;
         }
@@ -311,6 +324,17 @@ public class ConfigManager
         AimBotTuning.AimSmoothing = other.AimBotTuning.AimSmoothing;
         AimBotTuning.AimUpdateIntervalMs = other.AimBotTuning.AimUpdateIntervalMs;
         AimBotTuning.HumanizationSeed = other.AimBotTuning.HumanizationSeed;
+        AimBotTuning.RecoilScale = other.AimBotTuning.RecoilScale;
+        AimBotTuning.WeaponRcsScales = other.AimBotTuning.WeaponRcsScales != null
+            ? new Dictionary<string, float>(other.AimBotTuning.WeaponRcsScales)
+            : new Dictionary<string, float>();
+
+        Rcs ??= new RcsConfig();
+        Rcs.Enabled = other.Rcs.Enabled;
+        Rcs.GlobalScale = other.Rcs.GlobalScale;
+        Rcs.WeaponScales = other.Rcs.WeaponScales != null
+            ? new Dictionary<string, float>(other.Rcs.WeaponScales)
+            : new Dictionary<string, float>();
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -426,7 +450,33 @@ public class ConfigManager
                 HeadshotDamageThreshold = 100,
                 TextDurationSeconds = 1.5
             },
-            AimBotTuning = new AimBotTuningConfig()
+            AimBotTuning = new AimBotTuningConfig
+            {
+                RecoilScale = 2.0f,
+                WeaponRcsScales = new Dictionary<string, float>
+                {
+                    { "Ak47", 2.0f },
+                    { "M4A1", 2.0f },
+                    { "M4A1Silencer", 2.0f },
+                    { "Deagle", 1.0f },
+                    { "Glock", 1.5f },
+                    { "UspSilencer", 1.2f }
+                }
+            },
+            Rcs = new RcsConfig
+            {
+                Enabled = true,
+                GlobalScale = 2.0f,
+                WeaponScales = new Dictionary<string, float>
+                {
+                    { "Ak47", 2.0f },
+                    { "M4A1", 2.0f },
+                    { "M4A1Silencer", 2.0f },
+                    { "Deagle", 1.0f },
+                    { "Glock", 1.5f },
+                    { "UspSilencer", 1.2f }
+                }
+            }
         };
     }
 }
