@@ -4,7 +4,7 @@
   "bombTimer": true,
   "skeletonEsp": false,
   "triggerBot": true,
-  "aimBotKey": 1,
+  "aimBotKey": ,
   "triggerBotKey": 164,
   "menuToggleKey": 45,
   "teamCheck": true,
