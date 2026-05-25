@@ -61,7 +61,7 @@ public sealed class TriggerBot : ThreadedServiceBase
 
     private bool ShouldExecuteTriggerBot()
     {
-        return _gameProcess.IsValid && IsHotKeyDown() && (DateTime.Now - _lastShot) >= MinShotInterval;
+        return _config.TriggerBot && _gameProcess.IsValid && IsHotKeyDown() && (DateTime.Now - _lastShot) >= MinShotInterval;
     }
 
     private IntPtr GetTargetEntity()
