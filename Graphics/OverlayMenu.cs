@@ -79,17 +79,7 @@ namespace CS2GameHelper.Graphics
             _categories.Add(new MenuCategory("RCS", new List<MenuItem>
             {
                 new ToggleMenuItem("Enabled", () => _config.Rcs.Enabled, v => { _config.Rcs.Enabled = v; }, "Core"),
-                new SliderMenuItem("Global Scale", () => _config.Rcs.GlobalScale, v => { _config.Rcs.GlobalScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "Settings"),
-                new SliderMenuItem("AK-47 Scale",
-                    () => _config.Rcs.WeaponScales.TryGetValue("Ak47", out var s) ? s : _config.Rcs.GlobalScale,
-                    v => _config.Rcs.WeaponScales["Ak47"] = (float)v, 0.0, 4.0, 0.1, "0.0", "Weapons")
-            }));
-
-            _categories.Add(new MenuCategory("No Recoil", new List<MenuItem>
-            {
-                new ToggleMenuItem("Enabled", () => _config.NoRecoil.Enabled, v => { _config.NoRecoil.Enabled = v; }, "Core"),
-                new SliderMenuItem("Horizontal Scale", () => _config.NoRecoil.HorizontalScale, v => { _config.NoRecoil.HorizontalScale = (float)v; }, 0.0, 2.0, 0.05, "0.00", "Settings"),
-                new SliderMenuItem("Vertical Scale", () => _config.NoRecoil.VerticalScale, v => { _config.NoRecoil.VerticalScale = (float)v; }, 0.0, 2.0, 0.05, "0.00", "Settings")
+                new SliderMenuItem("Scale", () => _config.Rcs.GlobalScale, v => { _config.Rcs.GlobalScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "Settings")
             }));
 
             _categories.Add(new MenuCategory("TriggerBot", new List<MenuItem>
