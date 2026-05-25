@@ -79,7 +79,8 @@ namespace CS2GameHelper.Graphics
             _categories.Add(new MenuCategory("RCS", new List<MenuItem>
             {
                 new ToggleMenuItem("Enabled", () => _config.Rcs.Enabled, v => { _config.Rcs.Enabled = v; }, "Core"),
-                new SliderMenuItem("Scale", () => _config.Rcs.GlobalScale, v => { _config.Rcs.GlobalScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "Settings")
+                new SliderMenuItem("Scale", () => _config.Rcs.GlobalScale, v => { _config.Rcs.GlobalScale = (float)v; }, 0.0, 4.0, 0.1, "0.0", "Settings"),
+                new SliderMenuItem("Sensitivity", () => _config.Rcs.Sensitivity, v => { _config.Rcs.Sensitivity = (float)v; }, 0.1, 10.0, 0.01, "0.00", "Settings")
             }));
 
             _categories.Add(new MenuCategory("TriggerBot", new List<MenuItem>

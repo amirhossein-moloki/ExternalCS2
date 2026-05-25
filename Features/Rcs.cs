@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Threading;
@@ -19,9 +20,10 @@ namespace CS2GameHelper.Features
         private readonly ConfigManager _config;
         private readonly AimBot? _aimBot;
 
-        private int _lastShotsFired = 0;
-        private float _sumX = 0;
-        private float _sumY = 0;
+        private Stopwatch _fireStopwatch = new Stopwatch();
+        private bool _isFiring = false;
+        private float _rcsAppliedX = 0;
+        private float _rcsAppliedY = 0;
 
         public Rcs(GameProcess gameProcess, GameData gameData, ConfigManager config, AimBot? aimBot = null)
         {
@@ -35,14 +37,20 @@ namespace CS2GameHelper.Features
 
         protected override void FrameAction()
         {
-            if (!_config.Rcs.Enabled) return;
+            if (!_config.Rcs.Enabled)
+            {
+                _isFiring = false;
+                _fireStopwatch.Reset();
+                return;
+            }
 
             // If AimBot is actively moving the mouse to a target, it already accounts for RCS.
             if (_aimBot != null && _aimBot.IsActivelyTargeting)
             {
-                _lastShotsFired = 0;
-                _sumX = 0;
-                _sumY = 0;
+                _isFiring = false;
+                _fireStopwatch.Reset();
+                _rcsAppliedX = 0;
+                _rcsAppliedY = 0;
                 return;
             }
 
@@ -52,51 +60,66 @@ namespace CS2GameHelper.Features
                     return;
 
                 var player = _gameData.Player;
-                if (!player.IsAlive() || player.ShotsFired == 0)
+                if (!player.IsAlive())
                 {
-                    _lastShotsFired = 0;
-                    _sumX = 0;
-                    _sumY = 0;
+                    _isFiring = false;
+                    _fireStopwatch.Reset();
                     return;
                 }
 
-                if (player.ShotsFired != _lastShotsFired)
+                bool isCurrentlyFiring = player.ShotsFired > 0;
+                if (isCurrentlyFiring && !_isFiring)
                 {
-                    var pattern = PatternManager.GetPattern(player.CurrentWeaponName);
-                    if (pattern != null)
+                    _fireStopwatch.Restart();
+                    _isFiring = true;
+                    _rcsAppliedX = 0;
+                    _rcsAppliedY = 0;
+                }
+                else if (!isCurrentlyFiring)
+                {
+                    _isFiring = false;
+                    _fireStopwatch.Reset();
+                    _rcsAppliedX = 0;
+                    _rcsAppliedY = 0;
+                    return;
+                }
+
+                var weaponInfo = PatternManager.GetWeaponInfo(player.CurrentWeaponName);
+                if (weaponInfo != null)
+                {
+                    double elapsedMs = _fireStopwatch.Elapsed.TotalMilliseconds;
+                    int currIdx = 0;
+                    double accTime = 0;
+                    var pattern = weaponInfo.Pattern;
+
+                    for (int i = 0; i < pattern.Count; i++)
                     {
-                        int shotIndex = player.ShotsFired - 1;
-                        if (shotIndex < pattern.Count)
-                        {
-                            var point = pattern[shotIndex];
-
-                            float currentScale = _config.Rcs.GlobalScale;
-
-                            // We use the pattern directly as requested.
-                            // The scale from config is still applied as a global multiplier.
-                            // In many cases, scale 2.0 is used for full compensation if the pattern is 1:1 with recoil.
-
-                            float dx = point.Dx * (currentScale / 2.0f);
-                            float dy = -point.Dy * (currentScale / 2.0f);
-
-                            _sumX += dx;
-                            _sumY += dy;
-
-                            int moveX = (int)_sumX;
-                            int moveY = (int)_sumY;
-
-                            _sumX -= moveX;
-                            _sumY -= moveY;
-
-                            if (moveX != 0 || moveY != 0)
-                            {
-                                Utility.MouseMove(moveX, moveY);
-                            }
-                        }
+                        double delay = pattern[i].Delay / weaponInfo.SleepDivider - weaponInfo.SleepSuber;
+                        accTime += delay;
+                        if (accTime > elapsedMs) break;
+                        currIdx = i;
                     }
-                    // Fallback to traditional RCS removed as per request to use patterns exclusively.
 
-                    _lastShotsFired = player.ShotsFired;
+                    float totalDx = 0;
+                    float totalDy = 0;
+                    float sensScale = 2.45f / _config.Rcs.Sensitivity;
+                    float globalScale = _config.Rcs.GlobalScale / 2.0f;
+
+                    for (int i = 0; i <= currIdx; i++)
+                    {
+                        totalDx += pattern[i].Dx * sensScale * globalScale;
+                        totalDy += -pattern[i].Dy * sensScale * globalScale;
+                    }
+
+                    int moveX = (int)(totalDx - _rcsAppliedX);
+                    int moveY = (int)(totalDy - _rcsAppliedY);
+
+                    if (moveX != 0 || moveY != 0)
+                    {
+                        Utility.MouseMove(moveX, moveY);
+                        _rcsAppliedX += moveX;
+                        _rcsAppliedY += moveY;
+                    }
                 }
             }
             catch
