@@ -35,7 +35,7 @@
 | `showHealthText` | `true` | نمایش عدد سلامتی. |
 | `healthPosition` | `0` | موقعیت نوار سلامتی (0: چپ، 1: بالا، 2: راست، 3: پایین). |
 | `showDistance` | `true` | نمایش فاصله تا هدف بر حسب متر. |
-| `showWeaponIcon` | `true` | نمایش آیکون اسلحه دشمن. |
+| `showWeaponName` | `true` | نمایش نام اسلحه دشمن به صورت متن. |
 | `showArmor` | `true` | نمایش مقدار زره و داشتن کلاهخود. |
 | `showVisibilityIndicator`| `true` | تغییر رنگ یا علامت برای دشمنانی که در دید هستند. |
 | `enemyColor` | `"FF8B0000"` | رنگ دشمن (قالب ARGB - هگزادسیمال). |

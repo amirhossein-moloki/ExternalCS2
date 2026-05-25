@@ -29,6 +29,7 @@ namespace CS2GameHelper.Utils
     public class UserInputHandler : IDisposable
     {
         public Point LastMouseDelta { get; private set; }
+        public Point MousePosition => new Point(_lastMouseX, _lastMouseY);
         public DateTime LastMouseMoveTime { get; private set; }
         public bool IsLeftMouseDown { get; private set; }
         public bool IsRightMouseDown { get; private set; }

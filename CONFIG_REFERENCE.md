@@ -40,7 +40,7 @@ Maps to `ConfigManager.Esp`.
 | `showHealthBar` | bool | `ConfigManager.Esp.Box.ShowHealthBar` | `true` | Show health bar. |
 | `showHealthText` | bool | `ConfigManager.Esp.Box.ShowHealthText` | `true` | Show health text. |
 | `showDistance` | bool | `ConfigManager.Esp.Box.ShowDistance` | `true` | Show distance to player (in meters). |
-| `showWeaponIcon` | bool | `ConfigManager.Esp.Box.ShowWeaponIcon` | `true` | Show weapon icon using custom font. |
+| `showWeaponName` | bool | `ConfigManager.Esp.Box.ShowWeaponName` | `true` | Show weapon name as text. |
 | `showArmor` | bool | `ConfigManager.Esp.Box.ShowArmor` | `true` | Show armor value and helmet indicator. |
 | `showVisibilityIndicator` | bool | `ConfigManager.Esp.Box.ShowVisibilityIndicator` | `true` | Show visible/invisible status. |
 | `showFlags` | bool | `ConfigManager.Esp.Box.ShowFlags` | `true` | Show status flags (flashed, scoped, etc.). |
@@ -134,7 +134,7 @@ Maps to `ConfigManager.Esp`.
       "showHealthBar": true,
       "showHealthText": true,
       "showDistance": true,
-      "showWeaponIcon": true,
+      "showWeaponName": true,
       "showArmor": true,
       "showVisibilityIndicator": true,
       "showFlags": true,
