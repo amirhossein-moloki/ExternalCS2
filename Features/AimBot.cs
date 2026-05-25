@@ -231,10 +231,6 @@ namespace CS2GameHelper.Features
                             cumulativeY += -pattern[i].Dy;
                         }
 
-                        // Convert pixels to radians
-                        // Pattern stores movement to compensate recoil.
-                        // cumulativeX, cumulativeY are total pixels to move.
-                        // scale/2.0 is because RCS uses it, we should be consistent.
                         float scaleFactor = currentRecoilScale / 2.0f;
                         patternAngles = new Vector2(
                             (float)(-cumulativeX * scaleFactor * _anglePerPixelHorizontal),
@@ -245,18 +241,21 @@ namespace CS2GameHelper.Features
                     AimingMath.GetAimAngles(player, aimResult.TargetPosition, currentRecoilScale, out _, out var angles, patternAngles);
                     AimingMath.GetAimPixels(angles, _anglePerPixelHorizontal, _anglePerPixelVertical, out aimPixels);
 
-                    var ctx = new AimContext(
-                        aimResult.Distance,
-                        aimResult.TargetPosition,
-                        player.EyePosition,
-                        aimResult.TargetVelocity,
-                        deltaTimeMs,
-                        aimSpeed,
-                        targetAccelMag);
-                    var correction = _correctionProvider.GetCorrection(in ctx);
+                    if (_config.AimBotTuning.UseAiCorrections)
+                    {
+                        var ctx = new AimContext(
+                            aimResult.Distance,
+                            aimResult.TargetPosition,
+                            player.EyePosition,
+                            aimResult.TargetVelocity,
+                            deltaTimeMs,
+                            aimSpeed,
+                            targetAccelMag);
+                        var correction = _correctionProvider.GetCorrection(in ctx);
 
-                    aimPixels.X = (int)Math.Round(aimPixels.X - correction.X);
-                    aimPixels.Y = (int)Math.Round(aimPixels.Y - correction.Y);
+                        aimPixels.X = (int)Math.Round(aimPixels.X - correction.X);
+                        aimPixels.Y = (int)Math.Round(aimPixels.Y - correction.Y);
+                    }
                 }
 
                 ApplyHumanizedAimAdjustments(ref aimPixels, aimResult);
@@ -383,9 +382,9 @@ namespace CS2GameHelper.Features
         {
             if (!aimResult.Found) return;
 
-            var lockDuration = (DateTime.Now - _lastTargetLockTime).TotalMilliseconds;
             var pixelDistance = Math.Sqrt(aimPixels.X * (double)aimPixels.X + aimPixels.Y * (double)aimPixels.Y);
 
+            // Easing for smooth entry, but simplified for "pro" feel
             if (pixelDistance > 0)
             {
                 var gain = Math.Clamp(pixelDistance / _humanEaseDistancePixels, _humanMinimumGain, 1.0);
@@ -393,12 +392,7 @@ namespace CS2GameHelper.Features
                 aimPixels.Y = (int)Math.Round(aimPixels.Y * gain);
             }
 
-            if (lockDuration > _lockJitterStartMs && pixelDistance < 8)
-            {
-                var jitterRange = lockDuration > _lockJitterStrongMs ? 2 : 1;
-                aimPixels.X += _humanizationRandom.Next(-jitterRange, jitterRange + 1);
-                aimPixels.Y += _humanizationRandom.Next(-jitterRange, jitterRange + 1);
-            }
+            // Jitter removed as per user request for "pro player" feel
         }
         private void TryConfirmHitFromDamage()
         {

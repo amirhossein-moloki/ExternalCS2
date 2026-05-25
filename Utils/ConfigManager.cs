@@ -122,15 +122,16 @@ public class ConfigManager
     public class AimBotTuningConfig
     {
         public double HumanReactThreshold { get; set; } = 30.0;
-        public double HumanEaseDistancePixels { get; set; } = 35.0;
-        public double HumanMinimumGain { get; set; } = 0.15;
-        public int LockJitterStartMs { get; set; } = 600;
-        public int LockJitterStrongMs { get; set; } = 1500;
-        public int MinShootIntervalMs { get; set; } = 100;
-        public double AimSmoothing { get; set; } = 3.0;
-        public int AimUpdateIntervalMs { get; set; } = 500;
+        public double HumanEaseDistancePixels { get; set; } = 25.0;
+        public double HumanMinimumGain { get; set; } = 0.25;
+        public int LockJitterStartMs { get; set; } = 999999; // Effectively disabled for "pro" feel
+        public int LockJitterStrongMs { get; set; } = 999999;
+        public int MinShootIntervalMs { get; set; } = 50;
+        public double AimSmoothing { get; set; } = 1.5;
+        public int AimUpdateIntervalMs { get; set; } = 200;
         // 0 → случайный seed (недетерминированный). Другое → воспроизводимый джиттер.
         public int HumanizationSeed { get; set; } = 0;
+        public bool UseAiCorrections { get; set; } = false;
     }
 
     public class RcsConfig
@@ -335,6 +336,7 @@ public class ConfigManager
         AimBotTuning.AimSmoothing = other.AimBotTuning.AimSmoothing;
         AimBotTuning.AimUpdateIntervalMs = other.AimBotTuning.AimUpdateIntervalMs;
         AimBotTuning.HumanizationSeed = other.AimBotTuning.HumanizationSeed;
+        AimBotTuning.UseAiCorrections = other.AimBotTuning.UseAiCorrections;
 
         Rcs ??= new RcsConfig();
         Rcs.Enabled = other.Rcs.Enabled;

@@ -3,17 +3,20 @@
   "aimBotAutoShoot": true,
   "bombTimer": true,
   "skeletonEsp": false,
+  "skeletonShowHeadCircle": true,
   "triggerBot": true,
-  "aimBotKey": ,
+  "aimBotKey": 1,
   "triggerBotKey": 164,
   "menuToggleKey": 45,
   "teamCheck": true,
   "esp": {
     "box": {
       "enabled": true,
+      "showBox": true,
       "showName": true,
       "showHealthBar": true,
       "showHealthText": true,
+      "healthPosition": 0,
       "showDistance": true,
       "showWeaponName": true,
       "showArmor": true,
@@ -41,8 +44,19 @@
       "enabled": true,
       "radius": 6,
       "color": "FFFFFFFF",
-      "recoilScale": 2.0
+      "recoilScale": 2.0,
+      "showFovCircle": false,
+      "fovCircleRadius": 120,
+      "fovCircleColor": "80FFFFFF"
     }
+  },
+  "voteTeller": {
+    "enabled": true,
+    "colorT": "FFFF8C00",
+    "colorCT": "FF00BFFF",
+    "colorAll": "FFFFFFFF",
+    "x": 10,
+    "y": 350
   },
   "spectatorList": {
     "enabled": true
@@ -57,5 +71,21 @@
     "headshotSoundFile": "assets/sounds/headshot.wav",
     "headshotDamageThreshold": 100,
     "textDurationSeconds": 1.5
+  },
+  "aimBotTuning": {
+    "humanReactThreshold": 30.0,
+    "humanEaseDistancePixels": 25.0,
+    "humanMinimumGain": 0.25,
+    "lockJitterStartMs": 999999,
+    "lockJitterStrongMs": 999999,
+    "minShootIntervalMs": 50,
+    "aimSmoothing": 1.5,
+    "aimUpdateIntervalMs": 200,
+    "humanizationSeed": 0,
+    "useAiCorrections": false
+  },
+  "rcs": {
+    "enabled": true,
+    "globalScale": 2.0
   }
 }

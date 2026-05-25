@@ -32,10 +32,10 @@ This document explains how the project's AimBot works, where the code lives, key
 
 4. **Correction calculation**
    - Converts desired angles to pixels (`GetAimPixels`) using calibrated angles-per-pixel.
-   - Applies stacked corrections via `CompositeAimProvider` which composes statistical corrections from `AimTrainer` and predictions from `NeuralAimNetwork`.
+   - (Optional) Applies stacked corrections via `CompositeAimProvider` if `useAiCorrections` is enabled.
 
 5. **Humanization & smoothing**
-   - `ApplyHumanizedAimAdjustments` adds easing, jitter, scaling.
+   - `ApplyHumanizedAimAdjustments` adds easing and scaling. Random jitter is disabled for a "pro player" feel.
    - `_dynamicFov` and `_dynamicSmoothing` adapted based on recent success.
    - `_aiAggressiveness` adjusts based on user input.
 
