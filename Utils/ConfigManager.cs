@@ -137,6 +137,7 @@ public class ConfigManager
     {
         public bool Enabled { get; set; } = true;
         public float GlobalScale { get; set; } = 2.0f;
+        public float Sensitivity { get; set; } = 1.0f;
     }
 
     public class HitSoundConfig
@@ -339,6 +340,7 @@ public class ConfigManager
         Rcs ??= new RcsConfig();
         Rcs.Enabled = other.Rcs.Enabled;
         Rcs.GlobalScale = other.Rcs.GlobalScale;
+        Rcs.Sensitivity = other.Rcs.Sensitivity;
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -458,7 +460,8 @@ public class ConfigManager
             Rcs = new RcsConfig
             {
                 Enabled = true,
-                GlobalScale = 2.0f
+                GlobalScale = 2.0f,
+                Sensitivity = 1.0f
             }
         };
         return config;

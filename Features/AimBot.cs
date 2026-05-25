@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Threading;
@@ -55,6 +56,13 @@ namespace CS2GameHelper.Features
         private double _dynamicFov = GraphicsMath.DegreeToRadian(15f);
         private double _dynamicSmoothing;
         private DateTime _lastAimEvent = DateTime.MinValue;
+
+        private Stopwatch _fireStopwatch = new Stopwatch();
+        private float _rcsAppliedX = 0;
+        private float _rcsAppliedY = 0;
+        private float _sprayScaleX = 1.0f;
+        private float _sprayScaleY = 1.0f;
+        private bool _isFiring = false;
         private DateTime _lastAiUpdate = DateTime.MinValue;
         private DateTime _lastSuppressed = DateTime.MinValue;
         private int _activeTargetId = -1;
@@ -159,7 +167,42 @@ namespace CS2GameHelper.Features
                 if ((DateTime.Now - _lastSuppressed).TotalMilliseconds < SuppressMs)
                 {
                     IsActivelyTargeting = false;
+                    _isFiring = false;
+                    _fireStopwatch.Reset();
                     return;
+                }
+
+                // Professional RCS fire timing
+                bool isCurrentlyFiring = _inputHandler.IsKeyDown(Keys.LButton) || player.ShotsFired > 0;
+                if (isCurrentlyFiring && !_isFiring)
+                {
+                    _fireStopwatch.Restart();
+                    _isFiring = true;
+                    _rcsAppliedX = 0;
+                    _rcsAppliedY = 0;
+
+                    var weaponInfo = PatternManager.GetWeaponInfo(player.CurrentWeaponName);
+                    if (weaponInfo != null && weaponInfo.JitterMovement > 0)
+                    {
+                        float deviation = weaponInfo.JitterMovement / 100.0f;
+                        float sigma = deviation / 2.0f;
+                        // Approximate Gaussian using sum of uniforms
+                        float randGauss() => (float)((_humanizationRandom.NextDouble() + _humanizationRandom.NextDouble() + _humanizationRandom.NextDouble() - 1.5) * 2.0 * sigma);
+                        _sprayScaleX = 1.0f + randGauss();
+                        _sprayScaleY = 1.0f + randGauss();
+                    }
+                    else
+                    {
+                        _sprayScaleX = 1.0f;
+                        _sprayScaleY = 1.0f;
+                    }
+                }
+                else if (!isCurrentlyFiring)
+                {
+                    _isFiring = false;
+                    _fireStopwatch.Reset();
+                    _rcsAppliedX = 0;
+                    _rcsAppliedY = 0;
                 }
 
                 if (!_isCalibrated)
@@ -237,33 +280,64 @@ namespace CS2GameHelper.Features
 
                 float currentRecoilScale = _config.Rcs.GlobalScale;
 
-                if (aimResult.Found)
+                Point rcsDeltaPixels = Point.Empty;
+                if (_config.Rcs.Enabled && _isFiring)
                 {
-                    Vector2? patternAngles = null;
-                    var pattern = PatternManager.GetPattern(player.CurrentWeaponName);
-                    if (pattern != null && player.ShotsFired > 0)
+                    var weaponInfo = PatternManager.GetWeaponInfo(player.CurrentWeaponName);
+                    if (weaponInfo != null && player.ShotsFired > 0)
                     {
-                        float cumulativeX = 0;
-                        float cumulativeY = 0;
-                        int count = Math.Min(player.ShotsFired, pattern.Count);
-                        for (int i = 0; i < count; i++)
+                        double elapsedMs = _fireStopwatch.Elapsed.TotalMilliseconds;
+                        var pattern = weaponInfo.Pattern;
+                        int currIdx = 0;
+                        double accTime = 0;
+                        for (int i = 0; i < pattern.Count; i++)
                         {
-                            cumulativeX += pattern[i].Dx;
-                            cumulativeY += -pattern[i].Dy;
+                            double delay = pattern[i].Delay / weaponInfo.SleepDivider - weaponInfo.SleepSuber;
+                            accTime += delay;
+                            if (accTime > elapsedMs) break;
+                            currIdx = i;
                         }
 
-                        // Convert pixels to radians
-                        // Pattern stores movement to compensate recoil.
-                        // cumulativeX, cumulativeY are total pixels to move.
-                        // scale/2.0 is because RCS uses it, we should be consistent.
-                        float scaleFactor = currentRecoilScale / 2.0f;
-                        patternAngles = new Vector2(
-                            (float)(-cumulativeX * scaleFactor * _anglePerPixelHorizontal),
-                            (float)(cumulativeY * scaleFactor * _anglePerPixelVertical)
-                        );
+                        float totalDx = 0;
+                        float totalDy = 0;
+                        float sensScale = 2.45f / _config.Rcs.Sensitivity;
+                        for (int i = 0; i <= currIdx; i++)
+                        {
+                            totalDx += pattern[i].Dx * sensScale * _sprayScaleX;
+                            totalDy += -pattern[i].Dy * sensScale * _sprayScaleY;
+                        }
+
+                        rcsDeltaPixels.X = (int)Math.Round(totalDx - _rcsAppliedX);
+                        rcsDeltaPixels.Y = (int)Math.Round(totalDy - _rcsAppliedY);
+                    }
+                }
+
+                if (aimResult.Found)
+                {
+                    // Calculate aimbot correction accounting for TOTAL intended recoil
+                    float sensScaleInner = 2.45f / _config.Rcs.Sensitivity;
+                    float totalRcsX = 0, totalRcsY = 0;
+                    var weaponInfo = PatternManager.GetWeaponInfo(player.CurrentWeaponName);
+                    if (weaponInfo != null && player.ShotsFired > 0)
+                    {
+                        double elapsedMs = _fireStopwatch.Elapsed.TotalMilliseconds;
+                        double accTime = 0;
+                        for (int i = 0; i < weaponInfo.Pattern.Count; i++)
+                        {
+                            double delay = weaponInfo.Pattern[i].Delay / weaponInfo.SleepDivider - weaponInfo.SleepSuber;
+                            accTime += delay;
+                            if (accTime > elapsedMs) break;
+                            totalRcsX += weaponInfo.Pattern[i].Dx * sensScaleInner * _sprayScaleX;
+                            totalRcsY += -weaponInfo.Pattern[i].Dy * sensScaleInner * _sprayScaleY;
+                        }
                     }
 
-                    AimingMath.GetAimAngles(player, aimResult.TargetPosition, currentRecoilScale, out _, out var angles, patternAngles);
+                    Vector2 patternAngles = new Vector2(
+                        (float)(totalRcsX * _anglePerPixelHorizontal),
+                        (float)(-totalRcsY * _anglePerPixelVertical)
+                    );
+
+                    AimingMath.GetAimAngles(player, aimResult.TargetPosition, 0f, out _, out var angles, patternAngles);
                     AimingMath.GetAimPixels(angles, _anglePerPixelHorizontal, _anglePerPixelVertical, out aimPixels);
 
                     var ctx = new AimContext(
@@ -290,8 +364,14 @@ namespace CS2GameHelper.Features
                     adapt *= 0.5;
 
                 double smoothing = Math.Max(1.0, _dynamicSmoothing);
-                double finalX = aimPixels.X * adapt / smoothing;
-                double finalY = aimPixels.Y * adapt / smoothing;
+
+                // Professional Integration: Smoothed AimBot + Direct RCS Delta
+                double finalX = (aimPixels.X * adapt / smoothing) + rcsDeltaPixels.X;
+                double finalY = (aimPixels.Y * adapt / smoothing) + rcsDeltaPixels.Y;
+
+                // Update applied tracking
+                _rcsAppliedX += rcsDeltaPixels.X;
+                _rcsAppliedY += rcsDeltaPixels.Y;
 
                 // Humanization/Rounding fix: If the value is very small but not zero,
                 // we should round it instead of truncating to zero,
@@ -321,8 +401,6 @@ namespace CS2GameHelper.Features
                 {
                     if (Math.Abs(aimPixels.X) > 3 || Math.Abs(aimPixels.Y) > 3)
                     {
-                        // Use WindMouseMove for larger jumps to look more human.
-                        // It already implements a sophisticated curved path internally.
                         Utility.WindMouseMove(aimPixels.X, aimPixels.Y, G_0: 8.0, W_0: 2.5, M_0: 12.0, D_0: 10.0);
                     }
                     else
