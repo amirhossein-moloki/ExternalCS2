@@ -59,6 +59,8 @@ public abstract class Offsets
     public static int m_angEyeAngles;
     public static int m_CBodyComponent;
     public static int m_bGameRestart;
+    public static int m_pCameraServices;
+    public static int m_vecCsViewPunchAngle;
 
     public static class engine2_dll
     {
@@ -211,6 +213,8 @@ public abstract class Offsets
         destData.m_angEyeAngles = GetField(classes, "C_CSPlayerPawn", "m_angEyeAngles");
         destData.m_CBodyComponent = GetField(classes, "C_BaseEntity", "m_CBodyComponent");
         destData.m_vecOrigin = GetField(classes, "CGameSceneNode", "m_vecOrigin");
+        destData.m_pCameraServices = GetField(classes, "C_BasePlayerPawn", "m_pCameraServices");
+        destData.m_vecCsViewPunchAngle = GetField(classes, "CPlayer_CameraServices", "m_vecCsViewPunchAngle");
         destData.m_iNumRoundKills = GetField(classes, "CCSPlayerController_ActionTrackingServices", "m_iNumRoundKills");
         destData.m_flTotalRoundDamageDealt = GetField(classes, "CCSPlayerController_ActionTrackingServices", "m_flTotalRoundDamageDealt");
         destData.m_pActionTrackingServices = GetField(classes, "CCSPlayerController", "m_pActionTrackingServices");
@@ -296,6 +300,8 @@ public abstract class Offsets
         m_CBodyComponent = data.m_CBodyComponent;
         m_bGameRestart = data.m_bGameRestart;
         m_vecOrigin = data.m_vecOrigin;
+        m_pCameraServices = data.m_pCameraServices;
+        m_vecCsViewPunchAngle = data.m_vecCsViewPunchAngle;
     }
 
     #endregion
