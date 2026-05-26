@@ -84,7 +84,8 @@ public static class Utility
 
     public static Rectangle GetClientRectangle(IntPtr handle)
     {
-        return User32.ClientToScreen(handle, out var point) && User32.GetClientRect(handle, out var rect)
+        var point = new CS2GameHelper.Core.Data.Point { X = 0, Y = 0 };
+        return User32.ClientToScreen(handle, ref point) && User32.GetClientRect(handle, out var rect)
             ? new Rectangle(point.X, point.Y, rect.Right - rect.Left, rect.Bottom - rect.Top)
             : default;
     }
@@ -477,7 +478,7 @@ public static class Utility
     {
         return Read<T>(process.GetProcessHandle(), lpBaseAddress);
     }
-    
+
 
     public static T Read<T>(IntPtr handle, IntPtr lpBaseAddress)
         where T : unmanaged
@@ -499,7 +500,7 @@ public static class Utility
         {
             throw new InvalidOperationException("Module base address is not available.");
         }
-        
+
         var handle = module.GameProcess?.GetProcessHandle() ?? process.Handle;
 
         return Read<T>(handle, module.BaseAddress + offset);
@@ -539,7 +540,7 @@ public static class Utility
     {
         return ReadString(process.GetProcessHandle(), lpBaseAddress, maxLength);
     }
-    
+
     public static string ReadString(this System.Diagnostics.Process process, IntPtr lpBaseAddress, int maxLength = 256)
     {
         return ReadString(process.Handle, lpBaseAddress, maxLength);
