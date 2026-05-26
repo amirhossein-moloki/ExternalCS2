@@ -479,11 +479,22 @@ public static class Utility
         return Read<T>(process.GetProcessHandle(), lpBaseAddress);
     }
 
+    public static bool Write<T>(this CS2GameHelper.Data.Game.GameProcess process, IntPtr lpBaseAddress, T value)
+        where T : unmanaged
+    {
+        return Write<T>(process.GetProcessHandle(), lpBaseAddress, value);
+    }
 
     public static T Read<T>(IntPtr handle, IntPtr lpBaseAddress)
         where T : unmanaged
     {
         return InternalRead<T>(handle, lpBaseAddress);
+    }
+
+    public static bool Write<T>(IntPtr handle, IntPtr lpBaseAddress, T value)
+        where T : unmanaged
+    {
+        return InternalWrite<T>(handle, lpBaseAddress, value);
     }
 
 
@@ -534,6 +545,19 @@ public static class Utility
         }
 
         return default;
+    }
+
+    private static unsafe bool InternalWrite<T>(IntPtr hProcess, IntPtr lpBaseAddress, T value)
+        where T : unmanaged
+    {
+        if (CS2GameHelper.Core.DiskHelper.IsAvailable)
+        {
+            return CS2GameHelper.Core.DiskHelper.Write<T>(lpBaseAddress, value);
+        }
+
+        var size = sizeof(T);
+        return Kernel32.WriteProcessMemory(hProcess, lpBaseAddress, (IntPtr)(&value), size, out var lpNumberOfBytesWritten)
+               && lpNumberOfBytesWritten == size;
     }
 
     public static string ReadString(this CS2GameHelper.Data.Game.GameProcess process, IntPtr lpBaseAddress, int maxLength = 256)

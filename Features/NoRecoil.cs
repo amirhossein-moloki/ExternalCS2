@@ -41,16 +41,16 @@ namespace CS2GameHelper.Features
                 if (_config.NoRecoil.PerfectNoRecoil)
                 {
                     // Write zero to aimPunchAngle to remove bullet kick
-                    DiskHelper.Write(player.AddressBase + Offsets.m_AimPunchAngle, Vector3.Zero);
+                    _gameProcess.Write(player.AddressBase + Offsets.m_AimPunchAngle, Vector3.Zero);
                 }
 
                 if (_config.NoRecoil.NoVisualRecoil)
                 {
                     // Write zero to viewPunchAngle to remove screen shake
-                    IntPtr cameraServices = DiskHelper.Read<IntPtr>(player.AddressBase + Offsets.m_pCameraServices);
+                    IntPtr cameraServices = _gameProcess.Read<IntPtr>(player.AddressBase + Offsets.m_pCameraServices);
                     if (cameraServices != IntPtr.Zero)
                     {
-                        DiskHelper.Write(cameraServices + Offsets.m_vecCsViewPunchAngle, Vector3.Zero);
+                        _gameProcess.Write(cameraServices + Offsets.m_vecCsViewPunchAngle, Vector3.Zero);
                     }
                 }
             }
