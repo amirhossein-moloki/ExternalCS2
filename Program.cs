@@ -18,6 +18,7 @@ public sealed class Program : IDisposable
     private readonly TriggerBot _triggerBot;
     private readonly AimBot _aimBot;
     private readonly Rcs _rcs;
+    private readonly NoRecoil _noRecoil;
     private readonly Movement _movement;
     private readonly BombTimer _bombTimer;
     private readonly VoteTeller _voteTeller;
@@ -61,6 +62,9 @@ public sealed class Program : IDisposable
             _rcs.Start();
         }
 
+        _noRecoil = new NoRecoil(_gameProcess, _gameData, _config);
+        _noRecoil.Start();
+
         _movement = new Movement(_gameProcess, _gameData, _inputHandler, _config);
         _movement.Start();
 
@@ -77,7 +81,7 @@ public sealed class Program : IDisposable
         }
 
         // Discovery of features for the Management List
-        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _rcs, _bombTimer, _voteTeller, _graphics, _movement);
+        Utils.Registry.FeatureRegistry.Discover(_aimBot, _triggerBot, _rcs, _noRecoil, _bombTimer, _voteTeller, _graphics, _movement);
     }
 
     public static void Main()
@@ -190,6 +194,7 @@ public sealed class Program : IDisposable
             _voteTeller?.Dispose();
             _bombTimer?.Dispose();
             _movement?.Dispose();
+            _noRecoil?.Dispose();
             _rcs?.Dispose();
             _aimBot?.Dispose();
             _triggerBot?.Dispose();

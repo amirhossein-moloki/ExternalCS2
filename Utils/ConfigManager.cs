@@ -146,6 +146,13 @@ public class ConfigManager
         public string Color { get; set; } = "FF0000FF"; // Blue
     }
 
+    public NoRecoilConfig NoRecoil { get; set; } = new();
+    public class NoRecoilConfig
+    {
+        public bool PerfectNoRecoil { get; set; } = false;
+        public bool NoVisualRecoil { get; set; } = false;
+    }
+
     // Hit sound and on-screen hit text configuration
     public HitSoundConfig HitSound { get; set; } = new();
 
@@ -237,6 +244,7 @@ public class ConfigManager
             config.Movement ??= new MovementConfig();
             config.AdvancedVisuals ??= new AdvancedVisualsConfig();
             config.FollowRcs ??= new FollowRcsConfig();
+            config.NoRecoil ??= new NoRecoilConfig();
 
             return config;
         }
@@ -396,6 +404,11 @@ public class ConfigManager
             DotSize = other.FollowRcs.DotSize,
             Color = other.FollowRcs.Color
         };
+        NoRecoil = new NoRecoilConfig
+        {
+            PerfectNoRecoil = other.NoRecoil.PerfectNoRecoil,
+            NoVisualRecoil = other.NoRecoil.NoVisualRecoil
+        };
     }
 
     public static void Save(ConfigManager options, string fileName = ConfigFile)
@@ -540,7 +553,8 @@ public class ConfigManager
             },
             Movement = new MovementConfig(),
             AdvancedVisuals = new AdvancedVisualsConfig(),
-            FollowRcs = new FollowRcsConfig()
+            FollowRcs = new FollowRcsConfig(),
+            NoRecoil = new NoRecoilConfig()
         };
         return config;
     }

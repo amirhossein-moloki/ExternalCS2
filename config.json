@@ -4,7 +4,7 @@
   "bombTimer": true,
   "skeletonEsp": false,
   "triggerBot": true,
-  "aimBotKey": ,
+  "aimBotKey": 1,
   "triggerBotKey": 164,
   "menuToggleKey": 45,
   "teamCheck": true,
@@ -57,5 +57,9 @@
     "headshotSoundFile": "assets/sounds/headshot.wav",
     "headshotDamageThreshold": 100,
     "textDurationSeconds": 1.5
+  },
+  "noRecoil": {
+    "perfectNoRecoil": false,
+    "noVisualRecoil": false
   }
 }
