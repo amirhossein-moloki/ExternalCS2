@@ -55,6 +55,7 @@ public class ModernGraphics : ThreadedServiceBase
     private const uint SWP_NOMOVE = 0x0002;
     private const uint SWP_NOACTIVATE = 0x0010;
     private const uint SWP_SHOWWINDOW = 0x0040;
+    private const uint SWP_FRAMECHANGED = 0x0020;
 
     private static readonly IntPtr HWND_TOPMOST = new(-1);
     private static readonly IntPtr HWND_NOTOPMOST = new(-2);
@@ -138,6 +139,8 @@ public class ModernGraphics : ThreadedServiceBase
             gl.ClearColor(0f, 0f, 0f, 0f);
             gl.Enable(GLEnum.Blend);
             gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            gl.Disable(GLEnum.DepthTest);
+            gl.Disable(GLEnum.CullFace);
             gl.Viewport(0, 0, (uint)localWindow.Size.X, (uint)localWindow.Size.Y);
 
             self.ApplyWindowStyles();
@@ -257,14 +260,18 @@ public class ModernGraphics : ThreadedServiceBase
 
     private void ApplyWindowStyles()
     {
-    var nativeWin32 = _window?.Native?.Win32;
-    if (!nativeWin32.HasValue) return;
+        var nativeWin32 = _window?.Native?.Win32;
+        if (!nativeWin32.HasValue) return;
         var hwnd = new IntPtr(nativeWin32.Value.Hwnd);
+
+        var margins = new User32.Margins { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+        User32.DwmExtendFrameIntoClientArea(hwnd, ref margins);
+
         var exStyle = User32.GetWindowLong(hwnd, GWL_EXSTYLE);
         exStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
         User32.SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
         User32.SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
-        User32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
+        // User32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE); // Disabling this as it can cause issues on some AMD drivers
     }
 
     // === КОМАНДЫ ОТРИСОВКИ ===
@@ -557,20 +564,29 @@ public class ModernGraphics : ThreadedServiceBase
 
         try
         {
-            _window.Position = new Vector2D<int>(gameRect.X, gameRect.Y);
-            _window.Size = new Vector2D<int>(gameRect.Width, gameRect.Height);
-
             var nativeWin32 = _window.Native?.Win32;
             IntPtr hwnd = IntPtr.Zero;
             if (nativeWin32.HasValue)
             {
                 hwnd = new IntPtr(nativeWin32.Value.Hwnd);
             }
+
             if (hwnd != IntPtr.Zero)
             {
+                // Aggressively maintain position and size using WinAPI to bypass potential Silk.NET overhead/lag
                 var topmost = _gameProcess.IsWindowActive ? HWND_TOPMOST : HWND_NOTOPMOST;
-                User32.SetWindowPos(hwnd, topmost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                User32.SetWindowPos(hwnd, topmost, gameRect.X, gameRect.Y, gameRect.Width, gameRect.Height, SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_FRAMECHANGED);
+
+                // Update Silk.NET internal state so it doesn't try to "correct" it back
+                _window.Position = new Vector2D<int>(gameRect.X, gameRect.Y);
+                _window.Size = new Vector2D<int>(gameRect.Width, gameRect.Height);
             }
+            else
+            {
+                _window.Position = new Vector2D<int>(gameRect.X, gameRect.Y);
+                _window.Size = new Vector2D<int>(gameRect.Width, gameRect.Height);
+            }
+
             User32.ClipCursor(IntPtr.Zero);
         }
         catch { /* ignore */ }
@@ -644,6 +660,16 @@ public class ModernGraphics : ThreadedServiceBase
                 status += $" (auto-hide {(int)Math.Max(0, (_autoHideUntil - DateTime.UtcNow).TotalMilliseconds)} ms)";
             }
             AddHudText(status, 5, 110, SKColors.Yellow, 12);
+
+            if (_config.DebugMode)
+            {
+                var gameRect = _gameProcess.WindowRectangleClient;
+                var overlaySize = _window?.Size ?? new Vector2D<int>(0, 0);
+                var overlayPos = _window?.Position ?? new Vector2D<int>(0, 0);
+                AddHudText($"GameRect: {gameRect.X},{gameRect.Y} {gameRect.Width}x{gameRect.Height}", 5, 140, SKColors.Lime, 10);
+                AddHudText($"Overlay:  {overlayPos.X},{overlayPos.Y} {overlaySize.X}x{overlaySize.Y}", 5, 150, SKColors.Lime, 10);
+                AddHudText($"IsActive: {_gameProcess.IsWindowActive}", 5, 160, SKColors.Lime, 10);
+            }
 
             if (_overlayMenu != null)
             {

@@ -19,6 +19,7 @@ public class ConfigManager
     public Keys MenuToggleKey { get; set; } = Keys.Insert;
     public bool TeamCheck { get; set; } = true;
     public bool AimBotAutoShoot { get; set; } = true;
+    public bool DebugMode { get; set; } = false;
 
     // New dedicated RCS config object
     private RcsConfig _rcs = new();

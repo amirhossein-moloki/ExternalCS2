@@ -29,7 +29,7 @@ public class GameProcess : ThreadedServiceBase
     public Module? ModuleEngine { get; private set; }
 
     private IntPtr WindowHwnd { get; set; }
-    
+
     private IntPtr _hijackedHandle = IntPtr.Zero;
 
     public Rectangle WindowRectangleClient { get; private set; }
@@ -43,7 +43,18 @@ public class GameProcess : ThreadedServiceBase
     public bool IsValid => Process is { HasExited: false } && ModuleClient != null && WindowDetected;
 
     // True when the game's window exists and is the foreground window
-    public bool IsWindowActive => WindowHwnd != IntPtr.Zero && WindowHwnd == User32.GetForegroundWindow();
+    public bool IsWindowActive
+    {
+        get
+        {
+            if (WindowHwnd == IntPtr.Zero) return false;
+            var foreground = User32.GetForegroundWindow();
+            if (foreground == WindowHwnd) return true;
+
+            User32.GetWindowThreadProcessId(foreground, out var pid);
+            return pid == (uint)(Process?.Id ?? 0);
+        }
+    }
 
     #endregion
 
@@ -119,7 +130,7 @@ public class GameProcess : ThreadedServiceBase
         {
             return false;
         }
-        
+
         if (_hijackedHandle == IntPtr.Zero)
         {
             _hijackedHandle = Kernel32.OpenProcess(0x0010 | 0x0020 | 0x0400, false, Process.Id); // PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION
@@ -134,13 +145,13 @@ public class GameProcess : ThreadedServiceBase
 
         ModuleClient ??= Process.GetModule(NameModule);
         if (ModuleClient != null) ModuleClient.GameProcess = this;
-        
+
         ModuleEngine ??= Process.GetModule(NameEngineModule);
         if (ModuleEngine != null) ModuleEngine.GameProcess = this;
 
         return ModuleClient != null;
     }
-    
+
     public IntPtr GetProcessHandle()
     {
         return _hijackedHandle != IntPtr.Zero ? _hijackedHandle : (Process?.Handle ?? IntPtr.Zero);
@@ -152,7 +163,16 @@ public class GameProcess : ThreadedServiceBase
         WindowHwnd = User32.FindWindow(null!, NameWindow);
         if (WindowHwnd == IntPtr.Zero)
         {
-            return false;
+            var processes = System.Diagnostics.Process.GetProcessesByName(NameProcess);
+            foreach (var p in processes)
+            {
+                if (p.MainWindowHandle != IntPtr.Zero)
+                {
+                    WindowHwnd = p.MainWindowHandle;
+                    break;
+                }
+            }
+            if (WindowHwnd == IntPtr.Zero) return false;
         }
 
         WindowRectangleClient = Utility.GetClientRectangle(WindowHwnd);
@@ -161,7 +181,7 @@ public class GameProcess : ThreadedServiceBase
             return false;
         }
 
-        WindowActive = WindowHwnd == User32.GetForegroundWindow();
+        WindowActive = IsWindowActive;
 
         return true;
     }
