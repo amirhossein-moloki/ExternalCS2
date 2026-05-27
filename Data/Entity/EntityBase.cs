@@ -23,7 +23,7 @@ public abstract class EntityBase
     protected IntPtr ControllerBase { get; private set; }
     public IntPtr AddressBase { get; private set; }
 
-    private bool LifeState { get; set; }
+    private byte LifeState { get; set; }
     public int Health { get; private set; }
     public Team Team { get; private set; }
     protected Vector3 Origin { get; private set; }
@@ -51,7 +51,7 @@ public abstract class EntityBase
     {
         return ControllerBase != IntPtr.Zero &&
                AddressBase != IntPtr.Zero &&
-               LifeState &&
+               LifeState == 0 &&
                Health > 0 &&
                Team is Team.Terrorists or Team.CounterTerrorists;
     }
@@ -71,7 +71,7 @@ public abstract class EntityBase
         if (gameProcess.Process == null)
             throw new ArgumentNullException(nameof(gameProcess.Process), "Process cannot be null.");
 
-        LifeState = gameProcess.Read<bool>(AddressBase + Offsets.m_lifeState);
+        LifeState = gameProcess.Read<byte>(AddressBase + Offsets.m_lifeState);
         Health = gameProcess.Read<int>(AddressBase + Offsets.m_iHealth);
         Team = gameProcess.Read<int>(AddressBase + Offsets.m_iTeamNum).ToTeam();
         Origin = gameProcess.Read<Vector3>(AddressBase + Offsets.m_vOldOrigin);
